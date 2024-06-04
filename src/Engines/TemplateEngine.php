@@ -53,8 +53,9 @@ class TemplateEngine
 
     public function include(string $dots, array $_data = [], string $ext = '') : void
     {
-        if(!str_contains('/', $dots)) {
-            $dots = $this->folder . ':' . $dots;
+        // relative path in dot notation
+        if(str_starts_with($dots, '&')) {
+            $dots = $this->folder . ':' . substr($dots, 1);
         }
 
         $view = new View($dots, $_data);

@@ -8,4 +8,3 @@ $this->yield('scripts');
 $this->yield('main');
 
 $this->yield('footer');
-

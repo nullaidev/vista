@@ -67,4 +67,14 @@ class TestVista extends TestCase
         $this->assertStringContainsString('content body', $content);
         $this->assertStringEndsWith(PHP_EOL . '<footer>', $content);
     }
+
+    public function testViewEngineLayoutWithInclude()
+    {
+        $view = new View('with-layout-and-include', ['content' => 'content body']);
+        $content = $view->get();
+
+        $this->assertStringStartsWith('content body', $content);
+        $this->assertStringContainsString('test file', $content);
+        $this->assertStringEndsWith(PHP_EOL . '<footer>', $content);
+    }
 }
