@@ -6,14 +6,14 @@ use Nullai\Vista\View;
 
 class TemplateEngine
 {
-    protected string $file;
+    protected string $path;
     protected string $ext;
     protected View $view;
     protected string $folder;
     protected array $data = [];
     protected array $sections = [];
     protected string $currentSection;
-    protected string $layout;
+    protected string $layout = '';
 
     /**
      * TemplateEngine constructor.
@@ -22,9 +22,9 @@ class TemplateEngine
      * @param array $data
      * @param null|View $view
      */
-    public function __construct(string $file, array $data, View $view = null)
+    public function __construct(string $path, array $data, View $view = null)
     {
-        $this->file = $file;
+        $this->path = $path;
         $this->data = $data;
         $this->view = $view;
         $this->ext = $view->ext();
@@ -36,9 +36,9 @@ class TemplateEngine
         return $this->data;
     }
 
-    public function file() : string
+    public function fullPath() : string
     {
-        return $this->file;
+        return $this->path;
     }
 
     public function view() : View
@@ -109,7 +109,7 @@ class TemplateEngine
     {
         extract( $this->data );
         /** @noinspection PhpIncludeInspection */
-        include ( $this->file );
+        include ( $this->path );
 
         if($this->layout) {
             $html = trim(ob_get_clean());

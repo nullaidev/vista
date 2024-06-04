@@ -24,4 +24,18 @@ class TestVista extends TestCase
         $this->assertStringEndsWith('test', $view->file());
         $this->assertStringEndsWith('php', $view->ext());
     }
+
+    public function testViewContent()
+    {
+        $view = new View('test');
+
+        $this->assertStringContainsString('test file', $view->get());
+    }
+
+    public function testViewEngineContent()
+    {
+        $view = new View('engine-access');
+
+        $this->assertEquals($view->fullPath(), $view->get());
+    }
 }
