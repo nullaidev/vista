@@ -12,6 +12,7 @@ class TestVista extends TestCase
 
     public function testViewPaths()
     {
+        // using dot notation
         $view = new View('test');
 
         $this->assertStringEndsWith('tests/views/test.php', $view->fullPath());
@@ -19,6 +20,7 @@ class TestVista extends TestCase
         $this->assertStringEndsWith('test', $view->file());
         $this->assertStringEndsWith('php', $view->ext());
 
+        // using override folder prefix with : delimiter, in dot notation
         $view = new View(__DIR__ . '/views' .':test');
 
         $this->assertStringEndsWith('tests/views/test.php', $view->fullPath());
@@ -26,6 +28,7 @@ class TestVista extends TestCase
         $this->assertStringEndsWith('test', $view->file());
         $this->assertStringEndsWith('php', $view->ext());
 
+        // using direct file path
         $view = new View(__DIR__ . '/views/test.php');
 
         $this->assertStringEndsWith('tests/views/test.php', $view->fullPath());
