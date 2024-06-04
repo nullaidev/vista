@@ -1,6 +1,8 @@
 <?php
 use PHPUnit\Framework\TestCase;
 use \Nullai\Vista\View;
+use \Nullai\Vista\Engines\TemplateEngine;
+
 class TestVista extends TestCase
 {
     public function testViewClassConstructor()
@@ -37,6 +39,13 @@ class TestVista extends TestCase
         $view = new View('test');
 
         $this->assertStringContainsString('test file', $view->get());
+    }
+
+    public function testViewEngineClass()
+    {
+        $view = new View('engine-access');
+
+        $this->assertEquals(TemplateEngine::class, $view->engine());
     }
 
     public function testViewEngineContent()
