@@ -18,7 +18,7 @@ class TemplateEngine
     /**
      * TemplateEngine constructor.
      *
-     * @param string $file
+     * @param string $path
      * @param array $data
      * @param null|View $view
      */

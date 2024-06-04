@@ -77,4 +77,15 @@ class TestVista extends TestCase
         $this->assertStringContainsString('test file', $content);
         $this->assertStringEndsWith(PHP_EOL . '<footer>', $content);
     }
+
+    public function testViewEngineLayoutWithIncludeIf()
+    {
+        $view = new View('with-layout-and-include-if', ['content' => 'content body']);
+        $content = (string) $view;
+
+        $this->assertStringStartsWith('<html', $content);
+        $this->assertStringNotContainsString('test file', $content);
+        $this->assertStringContainsString('short tag', $content);
+        $this->assertStringEndsWith('html>', $content);
+    }
 }
