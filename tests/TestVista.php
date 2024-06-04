@@ -17,6 +17,13 @@ class TestVista extends TestCase
         $this->assertStringEndsWith('test', $view->file());
         $this->assertStringEndsWith('php', $view->ext());
 
+        $view = new View(__DIR__ . '/views' .':test');
+
+        $this->assertStringEndsWith('tests/views/test.php', $view->fullPath());
+        $this->assertStringEndsWith('tests/views', $view->folder());
+        $this->assertStringEndsWith('test', $view->file());
+        $this->assertStringEndsWith('php', $view->ext());
+
         $view = new View(__DIR__ . '/views/test.php');
 
         $this->assertStringEndsWith('tests/views/test.php', $view->fullPath());

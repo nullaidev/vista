@@ -21,13 +21,18 @@ class View
      */
     public function __construct(string $dots, array $data = [])
     {
-        if(!str_contains(':', $dots) && str_contains($dots, DIRECTORY_SEPARATOR) ) {
+        if(str_contains($dots, ':')) {
+            [$this->folder, $file] = explode(':', $dots);
+            $this->file = str_replace('.', DIRECTORY_SEPARATOR, $file);
+        }
+        elseif(str_contains($dots, DIRECTORY_SEPARATOR)) {
             $this->ext = pathinfo($dots, PATHINFO_EXTENSION);
             $this->file = pathinfo($dots, PATHINFO_FILENAME);
             $this->folder = pathinfo($dots, PATHINFO_DIRNAME);
-        } else {
+        }
+        else {
+            $this->folder = constant('NULLAI_VISTA_ROOT');
             $this->file = str_replace('.', DIRECTORY_SEPARATOR, $dots);
-            $this->folder = str_contains(':', $dots) ? explode(':', $dots)[0] : constant('NULLAI_VISTA_ROOT');
         }
 
         $this->data ??= $data;
