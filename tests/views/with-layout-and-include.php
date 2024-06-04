@@ -7,7 +7,6 @@ $this->layout('layouts.main-layout');
 
 echo $content;
 
-// if starts with & -> relative path in dot notation
 $this->include('test');
 
 $this->section('footer');
