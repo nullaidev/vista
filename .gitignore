@@ -1,0 +1,9 @@
+.idea
+.env
+.vscode
+/vendor
+/node_modules
+composer.lock
+.DS_Store*
+npm-debug.log
+phpunit.phar
