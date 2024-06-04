@@ -88,4 +88,12 @@ class TestVista extends TestCase
         $this->assertStringContainsString('short tag', $content);
         $this->assertStringEndsWith('html>', $content);
     }
+
+    public function testViewEngineRelativeIncludeNestWithGlobalAndLocalVars()
+    {
+        $view = new View('nest.level-two', ['content' => 'nested']);
+        $content = $view->get();
+
+        $this->assertEquals('nested3test file', $content);
+    }
 }

@@ -53,11 +53,6 @@ class TemplateEngine
 
     public function include(string $dots, array $_data = [], string $ext = '') : void
     {
-        // relative path in dot notation
-        if(str_starts_with($dots, '&')) {
-            $dots = $this->folder . ':' . substr($dots, 1);
-        }
-
         $view = new View($dots, $_data);
         $view->ext($ext);
         $_view_file = $view->fullPath();
