@@ -51,13 +51,15 @@ class TemplateEngine
         return $this->currentSection;
     }
 
-    public function include(string $dots, array $_data = [], ?string $ext = null) : void
+    public function include(string $dots, array $_data = [], string $ext = '') : void
     {
         if(!str_contains('/', $dots)) {
             $dots = $this->folder . ':' . $dots;
         }
 
-        $_view_file = (new View($dots, $_data))->ext($ext)->fullPath();
+        $view = new View($dots, $_data);
+        $view->ext($ext);
+        $_view_file = $view->fullPath();
 
         $cb = \Closure::bind(function() use ($_view_file, $_data) {
 
@@ -105,7 +107,7 @@ class TemplateEngine
         ob_start();
     }
 
-    public function load() : void
+    public function render() : void
     {
         extract( $this->data );
         /** @noinspection PhpIncludeInspection */
@@ -132,7 +134,7 @@ class TemplateEngine
     public function get() : string
     {
         ob_start();
-        $this->load();
+        $this->render();
         return ob_get_clean();
     }
 }

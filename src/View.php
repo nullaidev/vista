@@ -35,7 +35,7 @@ class View
             $this->file = str_replace('.', DIRECTORY_SEPARATOR, $dots);
         }
 
-        $this->data ??= $data;
+        $this->data = $data ?: $this->data;
         $this->engine = defined('NULLAI_VISTA_ENGINE') ? constant('NULLAI_VISTA_ENGINE') : TemplateEngine::class;
         $this->init();
     }
@@ -100,7 +100,7 @@ class View
     protected function render(): void
     {
         $templateEngine = $this->engine;
-        (new $templateEngine($this->fullPath(), $this->data(), $this))->load();
+        (new $templateEngine($this->fullPath(), $this->data(), $this))->render();
     }
 
     public function get(): string

@@ -57,4 +57,14 @@ class TestVista extends TestCase
 
         $this->assertEquals($view->fullPath(), $view->get());
     }
+
+    public function testViewEngineLayoutWithContent()
+    {
+        $view = new View('with-layout', ['content' => 'content body']);
+        $content = $view->get();
+
+        $this->assertStringStartsWith('<script>', $content);
+        $this->assertStringContainsString('content body', $content);
+        $this->assertStringEndsWith(PHP_EOL . '<footer>', $content);
+    }
 }
