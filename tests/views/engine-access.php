@@ -1,3 +1,3 @@
 <?php
-/** @var \Nullai\Vista\Engines\TemplateEngine $this */
-echo $this->fullPath();
+/** @var \Nullai\Vista\Engines\ViewRenderEngine $this */
+echo $this->view->fullPath;

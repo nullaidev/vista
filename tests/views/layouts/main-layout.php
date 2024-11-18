@@ -1,6 +1,6 @@
 <?php
 /**
- * @var $this \Nullai\Vista\Engines\TemplateEngine
+ * @var $this \Nullai\Vista\Engines\ViewRenderEngine
  */
 
 $this->yield('scripts');

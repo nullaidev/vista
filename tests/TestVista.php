@@ -1,7 +1,7 @@
 <?php
 use PHPUnit\Framework\TestCase;
 use \Nullai\Vista\View;
-use \Nullai\Vista\Engines\TemplateEngine;
+use \Nullai\Vista\Engines\ViewRenderEngine;
 
 class TestVista extends TestCase
 {
@@ -15,26 +15,26 @@ class TestVista extends TestCase
         // using dot notation
         $view = new View('test');
 
-        $this->assertStringEndsWith('tests/views/test.php', $view->fullPath());
-        $this->assertStringEndsWith('tests/views', $view->folder());
-        $this->assertStringEndsWith('test', $view->file());
-        $this->assertStringEndsWith('php', $view->ext());
+        $this->assertStringEndsWith('tests/views/test.php', $view->fullPath);
+        $this->assertStringEndsWith('tests/views', $view->folder);
+        $this->assertStringEndsWith('test', $view->file);
+        $this->assertStringEndsWith('php', $view->ext);
 
         // using override folder prefix with : delimiter, in dot notation
         $view = new View(__DIR__ . '/views' .':test');
 
-        $this->assertStringEndsWith('tests/views/test.php', $view->fullPath());
-        $this->assertStringEndsWith('tests/views', $view->folder());
-        $this->assertStringEndsWith('test', $view->file());
-        $this->assertStringEndsWith('php', $view->ext());
+        $this->assertStringEndsWith('tests/views/test.php', $view->fullPath);
+        $this->assertStringEndsWith('tests/views', $view->folder);
+        $this->assertStringEndsWith('test', $view->file);
+        $this->assertStringEndsWith('php', $view->ext);
 
         // using direct file path
         $view = new View(__DIR__ . '/views/test.php');
 
-        $this->assertStringEndsWith('tests/views/test.php', $view->fullPath());
-        $this->assertStringEndsWith('tests/views', $view->folder());
-        $this->assertStringEndsWith('test', $view->file());
-        $this->assertStringEndsWith('php', $view->ext());
+        $this->assertStringEndsWith('tests/views/test.php', $view->fullPath);
+        $this->assertStringEndsWith('tests/views', $view->folder);
+        $this->assertStringEndsWith('test', $view->file);
+        $this->assertStringEndsWith('php', $view->ext);
     }
 
     public function testViewContent()
@@ -48,14 +48,14 @@ class TestVista extends TestCase
     {
         $view = new View('engine-access');
 
-        $this->assertEquals(TemplateEngine::class, $view->engine());
+        $this->assertEquals(ViewRenderEngine::class, $view->engine);
     }
 
     public function testViewEngineContent()
     {
         $view = new View('engine-access');
 
-        $this->assertEquals($view->fullPath(), $view->get());
+        $this->assertEquals($view->fullPath, $view->get());
     }
 
     public function testViewEngineLayoutWithContent()

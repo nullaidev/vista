@@ -1,42 +1,65 @@
 <?php
 namespace Nullai\Vista;
 
-use Nullai\Vista\Engines\TemplateEngine;
+use Nullai\Vista\Engines\ViewRenderEngine;
 
 class View
 {
-    protected array $data = [];
-    protected string $folder;
-    protected string $ext = 'php';
-    protected null|string $file = null;
-    protected null|string $engine = null;
+    public array $data = [] {
+        get => $this->data;
+        set => $this->data = $value;
+    }
+
+    public string $folder {
+        get => $this->folder;
+        set => $this->folder = $value;
+    }
+
+    public string $ext = 'php' {
+        get => $this->ext;
+        set => $this->ext = $value;
+    }
+
+    public string $file {
+        get => $this->file;
+        set => $this->file = $value;
+    }
+
+    public string $fullPath {
+        get => $this->folder . DIRECTORY_SEPARATOR . $this->file . '.' . $this->ext;
+    }
+
+    public string $engine {
+        get => $this->engine;
+        set => $this->engine = $value;
+    }
 
     /**
      * View constructor.
      *
      * Take a custom file location or dot notation of view location.
      *
-     * @param string $dots dot syntax or specific file path
+     * @param string $view dot syntax or specific file path
      * @param array $data
      */
-    public function __construct(string $dots, array $data = [])
+    public function __construct(string $view, array $data = [])
     {
-        if(str_contains($dots, ':')) {
-            [$this->folder, $file] = explode(':', $dots);
+        if(str_contains($view, ':')) {
+            [$this->folder, $file] = explode(':', $view);
             $this->file = str_replace('.', DIRECTORY_SEPARATOR, $file);
         }
-        elseif(str_contains($dots, DIRECTORY_SEPARATOR)) {
-            $this->ext = pathinfo($dots, PATHINFO_EXTENSION);
-            $this->file = pathinfo($dots, PATHINFO_FILENAME);
-            $this->folder = pathinfo($dots, PATHINFO_DIRNAME);
+        elseif(str_contains($view, DIRECTORY_SEPARATOR)) {
+            $this->ext = pathinfo($view, PATHINFO_EXTENSION);
+            $this->file = pathinfo($view, PATHINFO_FILENAME);
+            $this->folder = pathinfo($view, PATHINFO_DIRNAME);
         }
         else {
-            $this->folder = constant('NULLAI_VISTA_ROOT');
-            $this->file = str_replace('.', DIRECTORY_SEPARATOR, $dots);
+            $this->folder = constant('NULLAI_VISTA_VIEWS_FOLDER');
+            $this->file = str_replace('.', DIRECTORY_SEPARATOR, $view);
         }
 
         $this->data = $data ?: $this->data;
-        $this->engine = defined('NULLAI_VISTA_ENGINE') ? constant('NULLAI_VISTA_ENGINE') : TemplateEngine::class;
+        $this->engine = defined('NULLAI_VISTA_ENGINE') ? constant('NULLAI_VISTA_ENGINE') : ViewRenderEngine::class;
         $this->init();
     }
 
@@ -44,63 +67,41 @@ class View
 
     public function data(array $data = []) : static|array
     {
-        if($data) {
-            $this->data = $data;
-            return $this;
-        }
-
-        return $this->data;
+        $this->data = $data;
+        return $this;
     }
 
-    public function folder(string $folder = '') : static|string
+    public function folder(string $folder) : static|string
     {
-        if($folder) {
-            $this->folder = rtrim($folder, DIRECTORY_SEPARATOR);
-            return $this;
-        }
-
-        return $this->folder;
+        $this->folder = rtrim($folder, DIRECTORY_SEPARATOR);
+        return $this;
     }
 
-    public function file(string $file = '') : static|string
+    public function file(string $file) : static|string
     {
-        if($file) {
-            $this->file = $file;
-            return $this;
-        }
-
-        return $this->file;
+        $this->file ??= $file;
+        return $this;
     }
 
-    public function ext(string $ext = '') : static|string
+    public function ext(string $ext) : static|string
     {
         if($ext) {
             $this->ext = $ext;
-            return $this;
         }
 
-        return $this->ext;
+        return $this;
     }
 
-    public function engine(string $engine = '') : static|string
+    public function engine(string $engine) : static|string
     {
-        if($engine) {
-            $this->engine = $engine;
-            return $this;
-        }
-
-        return $this->engine;
-    }
-
-    public function fullPath() : string
-    {
-        return $this->folder . DIRECTORY_SEPARATOR . $this->file . '.' . $this->ext;
+        $this->engine = $engine;
+        return $this;
     }
 
     protected function render(): void
     {
         $templateEngine = $this->engine;
-        (new $templateEngine($this->fullPath(), $this->data(), $this))->render();
+        new $templateEngine($this)->render();
     }
 
     public function get(): string

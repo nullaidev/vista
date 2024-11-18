@@ -4,13 +4,9 @@ namespace Nullai\Vista\Engines;
 
 use Nullai\Vista\View;
 
-class TemplateEngine
+class ViewRenderEngine
 {
-    protected string $path;
-    protected string $ext;
     protected View $view;
-    protected string $folder;
-    protected array $data = [];
     protected array $sections = [];
     protected string $currentSection;
     protected string $layout = '';
@@ -18,27 +14,16 @@ class TemplateEngine
     /**
      * TemplateEngine constructor.
      *
-     * @param string $path
-     * @param array $data
-     * @param null|View $view
+     * @param View $view
      */
-    public function __construct(string $path, array $data, View $view = null)
+    public function __construct(View $view)
     {
-        $this->path = $path;
-        $this->data = $data;
         $this->view = $view;
-        $this->ext = $view->ext();
-        $this->folder = $view->folder();
     }
 
     public function data() : array
     {
-        return $this->data;
-    }
-
-    public function fullPath() : string
-    {
-        return $this->path;
+        return $this->view->data;
     }
 
     public function view() : View
@@ -51,22 +36,19 @@ class TemplateEngine
         return $this->currentSection;
     }
 
-    public function include(string $dots, array $_data = [], string $ext = '') : void
+    public function include(string|View $view, array $data = []) : void
     {
-        $view = new View($dots, $_data);
-        $view->ext($ext);
-        $_view_file = $view->fullPath();
+        $_include_view = $view instanceof View ?: new View($view, $data);
+        $_parent_view_data = $this->view->data;
+        $_view_data = $_include_view->data;
 
-        $cb = \Closure::bind(function() use ($_view_file, $_data) {
+        $cb = \Closure::bind(function() use ($_include_view, $_parent_view_data, $_view_data) {
+            if(file_exists($_include_view->fullPath)) {
+                extract($_parent_view_data);
+                extract($_view_data);
 
-            extract($this->data());
-            extract($_data);
-            unset($_data);
-
-            if(file_exists($_view_file)) {
-                include $_view_file;
+                include $_include_view->fullPath;
             }
-
         }, $this);
 
         $cb();
@@ -105,9 +87,10 @@ class TemplateEngine
 
     public function render() : void
     {
-        extract( $this->data );
+        $_view_data = $this->view->data;
+        extract($_view_data);
         /** @noinspection PhpIncludeInspection */
-        include ( $this->path );
+        include ( $this->view->fullPath );
 
         if($this->layout) {
             $html = trim(ob_get_clean());
