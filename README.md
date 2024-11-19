@@ -1,6 +1,8 @@
 # Vista
 
-A blazing-fast and ultra-lightweight PHP view engine designed for modern PHP 8.4+ applications.
+A brand new, blazing-fast, and ultra-lightweight PHP view engine designed for modern PHP 8.4+ applications.
+
+[![Packagist Downloads](https://img.shields.io/packagist/dt/nullaidev/vista)](https://packagist.org/packages/nullaidev/vista)
 
 ## Overview
 
@@ -27,6 +29,8 @@ To get started with Vista, you need to have PHP 8.4 installed on your system. Yo
 ```
 composer require nullaidev/vista
 ```
+
+https://packagist.org/packages/nullaidev/vista
 
 ## Project Example
 
