@@ -41,7 +41,14 @@ class TestVista extends TestCase
     {
         $view = new View('test');
 
-        $this->assertStringContainsString('test file', $view->get());
+        $this->assertStringContainsString('test file &amp;', $view->content());
+    }
+
+    public function testViewContentRelativeLookup()
+    {
+        $view = new View(':test');
+
+        $this->assertStringContainsString('test file &amp;', $view->content());
     }
 
     public function testViewEngineClass()
@@ -55,13 +62,13 @@ class TestVista extends TestCase
     {
         $view = new View('engine-access');
 
-        $this->assertEquals($view->fullPath, $view->get());
+        $this->assertEquals($view->fullPath, $view->content());
     }
 
     public function testViewEngineLayoutWithContent()
     {
         $view = new View('with-layout', ['content' => 'content body']);
-        $content = $view->get();
+        $content = $view->content();
 
         $this->assertStringStartsWith('<script>', $content);
         $this->assertStringContainsString('content body', $content);
@@ -71,29 +78,42 @@ class TestVista extends TestCase
     public function testViewEngineLayoutWithInclude()
     {
         $view = new View('with-layout-and-include', ['content' => 'content body']);
-        $content = $view->get();
+        $content = $view->content();
 
         $this->assertStringStartsWith('content body', $content);
         $this->assertStringContainsString('test file', $content);
         $this->assertStringEndsWith(PHP_EOL . '<footer>', $content);
     }
 
-    public function testViewEngineLayoutWithIncludeIf()
+    public function testViewEngineLayoutWithIncludeIfAndSlugify()
     {
         $view = new View('with-layout-and-include-if', ['content' => 'content body']);
         $content = (string) $view;
 
         $this->assertStringStartsWith('<html', $content);
-        $this->assertStringNotContainsString('test file', $content);
+        $this->assertStringNotContainsString('test file &amp;', $content);
         $this->assertStringContainsString('short tag', $content);
+        $this->assertStringEndsWith('html>', $content);
+    }
+
+    public function testViewEngineLayoutWithTitleAndJsonEscape()
+    {
+        $view = new View('with-layout-and-title', ['content' => 'content body', 'title' => 'test title']);
+        $content = (string) $view;
+
+        $this->assertStringStartsWith('<html', $content);
+        $this->assertStringContainsString('<title>test title</title>', $content);
+        $this->assertStringContainsString('short tag', $content);
+        $this->assertStringContainsString('console.log({"site":"\u003CMy Site\u003E"});', $content);
+        $this->assertStringNotContainsString('test file &amp;', $content);
         $this->assertStringEndsWith('html>', $content);
     }
 
     public function testViewEngineRelativeIncludeNestWithGlobalAndLocalVars()
     {
         $view = new View('nest.level-two', ['content' => 'nested']);
-        $content = $view->get();
+        $content = $view->content();
 
-        $this->assertEquals('nested3test file', $content);
+        $this->assertEquals('nested3test file &amp;', $content);
     }
 }

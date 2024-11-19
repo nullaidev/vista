@@ -3,7 +3,7 @@ namespace Nullai\Vista;
 
 use Nullai\Vista\Engines\ViewRenderEngine;
 
-class View
+class View implements \Stringable
 {
     public array $data = [] {
         get => $this->data;
@@ -12,7 +12,7 @@ class View
 
     public string $folder {
         get => $this->folder;
-        set => $this->folder = $value;
+        set => $this->folder = rtrim($value, DIRECTORY_SEPARATOR);
     }
 
     public string $ext = 'php' {
@@ -39,13 +39,14 @@ class View
      *
      * Take a custom file location or dot notation of view location.
      *
-     * @param string $view dot syntax or specific file path
+     * @param string $view dot syntax (__DIR__:subfolder.file-name or subfolder.file-name) or specific file path
      * @param array $data
      */
     public function __construct(string $view, array $data = [])
     {
         if(str_contains($view, ':')) {
             [$this->folder, $file] = explode(':', $view);
+            $this->folder = $this->folder ?: constant('NULLAI_VISTA_VIEWS_FOLDER');
             $this->file = str_replace('.', DIRECTORY_SEPARATOR, $file);
         }
         elseif(str_contains($view, DIRECTORY_SEPARATOR)) {
@@ -60,42 +61,6 @@ class View
 
         $this->data = $data ?: $this->data;
         $this->engine = defined('NULLAI_VISTA_ENGINE') ? constant('NULLAI_VISTA_ENGINE') : ViewRenderEngine::class;
-        $this->init();
-    }
-
-    protected function init() {}
-
-    public function data(array $data = []) : static|array
-    {
-        $this->data = $data;
-        return $this;
-    }
-
-    public function folder(string $folder) : static|string
-    {
-        $this->folder = rtrim($folder, DIRECTORY_SEPARATOR);
-        return $this;
-    }
-
-    public function file(string $file) : static|string
-    {
-        $this->file ??= $file;
-        return $this;
-    }
-
-    public function ext(string $ext) : static|string
-    {
-        if($ext) {
-            $this->ext = $ext;
-        }
-
-        return $this;
-    }
-
-    public function engine(string $engine) : static|string
-    {
-        $this->engine = $engine;
-        return $this;
     }
 
     protected function render(): void
@@ -104,7 +69,7 @@ class View
         new $templateEngine($this)->render();
     }
 
-    public function get(): string
+    public function content(): string
     {
         ob_start();
         $this->render();
@@ -113,6 +78,6 @@ class View
 
     public function __toString() : string
     {
-        return $this->get();
+        return $this->content();
     }
 }

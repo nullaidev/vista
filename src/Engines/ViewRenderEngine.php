@@ -4,15 +4,20 @@ namespace Nullai\Vista\Engines;
 
 use Nullai\Vista\View;
 
-class ViewRenderEngine
+class ViewRenderEngine implements \Stringable
 {
-    protected View $view;
+    public const string ENCODING = 'UTF-8';
+
+    protected View $view {
+        get => $this->view;
+    }
+
     protected array $sections = [];
     protected string $currentSection;
     protected string $layout = '';
 
     /**
-     * TemplateEngine constructor.
+     * Engine constructor.
      *
      * @param View $view
      */
@@ -21,37 +26,44 @@ class ViewRenderEngine
         $this->view = $view;
     }
 
-    public function data() : array
-    {
-        return $this->view->data;
-    }
-
-    public function view() : View
-    {
-        return $this->view;
-    }
-
-    public function sectionIs() : string
-    {
-        return $this->currentSection;
-    }
-
     public function include(string|View $view, array $data = []) : void
     {
-        $_include_view = $view instanceof View ?: new View($view, $data);
-        $_parent_view_data = $this->view->data;
-        $_view_data = $_include_view->data;
+        if(str_starts_with($view, ':')) {
+            $view = $this->view->folder . '/' . pathinfo($this->view->file, PATHINFO_DIRNAME) . $view;
+        }
 
-        $cb = \Closure::bind(function() use ($_include_view, $_parent_view_data, $_view_data) {
-            if(file_exists($_include_view->fullPath)) {
-                extract($_parent_view_data);
-                extract($_view_data);
+        $_view = $view instanceof View ?: new View($view, $data);
+        $_data = $_view->data;
+        $_parent_view = $this->view;
 
-                include $_include_view->fullPath;
+        // Use parent view's file extension if none is set
+        $_view->ext = $_view->ext ?: $this->view->ext;
+
+        $cb = \Closure::bind(function() use ($_view, $_data, $_parent_view) {
+            if(file_exists($_view->fullPath)) {
+                $parent = $_parent_view->data;
+                extract($_data);
+
+                include $_view->fullPath;
             }
         }, $this);
 
         $cb();
+    }
+
+    public function escHtml($html, $flags = ENT_NOQUOTES) : string
+    {
+        return htmlspecialchars($html, $flags, static::ENCODING);
+    }
+
+    public function escAttr($html, $flags = ENT_QUOTES) : string
+    {
+        return htmlspecialchars($html, $flags, static::ENCODING);
+    }
+
+    public function escJson($data, $flags = JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) : string
+    {
+        return json_encode($data, $flags);
     }
 
     public function includeIf(bool $condition, mixed ...$args) : bool
@@ -87,9 +99,9 @@ class ViewRenderEngine
 
     public function render() : void
     {
-        $_view_data = $this->view->data;
-        extract($_view_data);
-        /** @noinspection PhpIncludeInspection */
+        $_data = $this->view->data;
+
+        extract($_data);
         include ( $this->view->fullPath );
 
         if($this->layout) {

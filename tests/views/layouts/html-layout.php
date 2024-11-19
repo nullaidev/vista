@@ -1,13 +1,13 @@
 <html lang="en">
-<?php
-/**
- * @var $this \Nullai\Vista\Engines\ViewRenderEngine
- */
+<head>
+    <title><?php echo $this->view->data['title'] ?></title>
+    <?php $this->yield('scripts'); ?>
+</head>
+<body>
+<?php $this->yield('main');  ?>
 
-$this->yield('scripts');
+<?php $this->yield('footer'); ?>
 
-$this->yield('main');
-
-$this->yield('footer');
-?>
+<?php var_dump($_view_data); ?>
+</body>
 </html>

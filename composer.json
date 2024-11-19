@@ -3,7 +3,9 @@
     "description": "Vista view render engine.",
     "license": "MIT",
     "require": {
-        "php": ">=8.4"
+        "php": ">=8.4",
+        "ext-mbstring": "*",
+        "ext-iconv": "*"
     },
     "require-dev": {
         "phpunit/phpunit": "^11"

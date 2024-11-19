@@ -1,6 +1,7 @@
 <?php
 /**
  * @var $this \Nullai\Vista\Engines\ViewRenderEngine
+ * @var array $_data
  */
-$this->include(__DIR__ . ':nest-include', ['nested' => 3]);
+$this->include(':nest-include', ['nested' => 3, ...$_data]);
 $this->include('test');
