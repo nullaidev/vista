@@ -213,3 +213,11 @@ Sanitize data and encode it as JSON using thw rendering engine's `escJson()`:
 </script>
 <?php $this->end(); ?>
 ```
+
+## Security Vulnerabilities
+
+If you discover a security vulnerability within Vista, please submit an issue on GitHub. All security vulnerabilities will be promptly addressed.
+
+## License
+
+The Vista PHP view rendering utility is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
