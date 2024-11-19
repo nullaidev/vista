@@ -2,7 +2,7 @@
 
 A brand new, blazing-fast, and ultra-lightweight PHP view engine designed for modern PHP 8.4+ applications.
 
-[Read Full Documentation](https://nullai.mintlify.app/vista/overview)
+[Read Full Documentation](https://docs.nullai.com/vista/overview)
 
 ## Overview
 
