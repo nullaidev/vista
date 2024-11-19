@@ -2,6 +2,8 @@
 
 A brand new, blazing-fast, and ultra-lightweight PHP view engine designed for modern PHP 8.4+ applications.
 
+[Read Full Documentation](https://nullai.mintlify.app/vista/overview)
+
 ## Overview
 
 Vista is a minimalist PHP view engine that focuses on performance and simplicity. It provides powerful tools to manage layouts, partials/includes, and dynamic content rendering, making it an ideal choice for modern PHP projects. Unlike traditional template engines like Blade or Twig, Vista does not rely on compiling or caching template files. This makes it an ideal choice for developers who prioritize performance and need a straightforward solution for managing views.
