@@ -181,7 +181,7 @@ Sanitize HTML from using the rendering engine's `escHtml()`:
         <ul>
             <?php foreach ($menu ?? [] as $item): ?>
                 <li>
-                    <a href="<?= $this->escAttr($item) ?>">
+                    <a href="#" title="<?= $this->escAttr($item) ?>">
                         <?= $this->escHtml($item) ?>       
                     </a>
                 </li>
