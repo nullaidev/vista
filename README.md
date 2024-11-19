@@ -291,7 +291,7 @@ $this->layout('layouts.main-layout');
 echo $content;
 ?>
 
-<?php $this->include(__DIR__ . '/users/parts/form.php', ['form' => $form]); ?>
+<?php $this->include(__DIR__ . '/parts/form.php', ['form' => $form]); ?>
 ```
 
 ## Security Vulnerabilities
