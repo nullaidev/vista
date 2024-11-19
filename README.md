@@ -115,7 +115,7 @@ echo new \Nullai\Vista\View('home');
 
 ### Includes
 
-You can use includes within any view relative to the root views folder. In this example, the layout file:
+You can use includes within any view relative to the root views' folder. In this example, the layout file:
 
 ```php
 <?php
@@ -166,7 +166,7 @@ Inside `sidebar.php`, the `$menu` array will be accessible.
 </aside>
 ```
 
-## Sanitization: Raw HTML, Attributes, Slugs, and JSON
+## Sanitization: Raw HTML, Attributes, and JSON
 
 Sanitize HTML from using the rendering engine's `escHtml()`:
 
@@ -210,6 +210,88 @@ Sanitize data and encode it as JSON using thw rendering engine's `escJson()`:
     console.log(<?= $this->escJson(['site' => '<My Site>']) ?>);
 </script>
 <?php $this->end(); ?>
+```
+
+## Advanced Include Features
+
+Expanding the project to include a users' folder.
+
+```text
+project-root/
+├── vendor/
+│   └── autoload.php
+├── views/
+│   ├── layouts/
+│   │   └── main-layout.php
+│   ├── users/               # Users folder
+│   │   ├── parts/           # Partials folder
+│   │   │   └── form.php     # User edit form
+│   │   └── index.php        # User index
+│   │   └── edit.php         # User edit
+│   └── home.php
+│   └── sidebar.php
+├── public
+│   └── index.php
+```
+
+### Relative Include
+
+To include a view relative to the current view file prefix the include value with `:`:
+
+```php
+<?php
+/**
+ * views/users/edit.php
+ * 
+ * @var $this \Nullai\Vista\Engines\ViewRenderEngine
+ * @var $content string
+ */
+$this->layout('layouts.main-layout');
+
+echo $content;
+?>
+
+<?php $this->include(':parts/form', ['form' => $form]); ?>
+```
+
+### Conditional Include
+
+You can also include with `includeIf()` which will only include the view if conditionals are meet:
+
+```php
+<?php
+/**
+ * views/users/edit.php
+ * 
+ * @var $this \Nullai\Vista\Engines\ViewRenderEngine
+ * @var $content string
+ */
+$this->layout('layouts.main-layout');
+
+echo $content;
+?>
+
+<?php $this->includeIf(!empty($form), ':parts/form', ['form' => $form]); ?>
+```
+
+### File Include
+
+You can include a specific file using its absolute path:
+
+```php
+<?php
+/**
+ * views/users/edit.php
+ * 
+ * @var $this \Nullai\Vista\Engines\ViewRenderEngine
+ * @var $content string
+ */
+$this->layout('layouts.main-layout');
+
+echo $content;
+?>
+
+<?php $this->include(__DIR__ . '/users/parts/form.php', ['form' => $form]); ?>
 ```
 
 ## Security Vulnerabilities
