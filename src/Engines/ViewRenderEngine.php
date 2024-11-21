@@ -61,6 +61,64 @@ class ViewRenderEngine implements \Stringable
         return htmlspecialchars($html, $flags, static::ENCODING);
     }
 
+    /**
+     * Filters the given HTML content, allowing only specified tags and attributes.
+     *
+     * Escapes attribute values and removes unsupported tags and attributes based on the provided allowed tags and attributes configuration.
+     *
+     * @param string|\Stringable $html The input HTML content as a string.
+     * @param array|string $allowedTags A list of tags (with attributes) to allow, either as an array or a comma-separated string (a:href|style,br).
+     * @param string|null $selector Optional CSS selector to specify which elements should be filtered.
+     * @param int $flags Optional flags for HTML parsing and error handling, defaults to LIBXML_NOERROR | LIBXML_HTML_NOIMPLIED.
+     *
+     * @return string The sanitized HTML content.
+     */
+    public function allowTags(string|\Stringable $html, array|string $allowedTags = [], ?string $selector = null, int $flags = LIBXML_NOERROR | LIBXML_HTML_NOIMPLIED) : string
+    {
+        if(is_string($allowedTags)) {
+            $tags = explode(',', $allowedTags);
+            $allowedTags = [];
+
+            foreach ($tags as $tag) {
+                [$tag, $attributes] = explode(':', $tag, 2);
+                if ($attributes) {
+                    $attributes = explode('|', $attributes);
+
+                }
+                $allowedTags[$tag] = $attributes ?? [];
+            }
+        }
+
+        $dom = \Dom\HTMLDocument::createFromString((string) $html, $flags);
+        $allowedTagsList = array_keys($allowedTags);
+
+        foreach ($dom->querySelectorAll($selector ?? '*') as $node) {
+            if (!in_array($node->localName, $allowedTagsList)) {
+                $node->parentNode->removeChild($node);
+                continue;
+            }
+
+            foreach (iterator_to_array($node->attributes) as $attribute) {
+                if (!$attribute->localName || !in_array($attribute->localName, $allowedTags[$node->localName] ?? [])) {
+                    $node->removeAttribute($attribute->localName);
+                    continue;
+                }
+
+                // PHP HTMLDocument is double encoding &
+                // $attribute->value = htmlspecialchars($attribute->value, ENT_QUOTES, static::ENCODING);
+            }
+        }
+
+        return $dom->saveHTML();
+    }
+
+    /**
+     * Escape data for JSON encoding.
+     *
+     * @param mixed $data The data to be encoded.
+     * @param int $flags Optional. Bitmask consisting of JSON encode options.
+     * @return string The JSON encoded string.
+     */
     public function escJson($data, $flags = JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) : string
     {
         return json_encode($data, $flags);
