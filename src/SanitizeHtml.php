@@ -14,6 +14,7 @@ class SanitizeHtml
      * @param string|\Stringable $html The input HTML content as a string.
      * @param array|string|\Stringable $tags A list of tags (with attributes) to allow, either as an array or a comma-separated string (a:href|style,br).
      * @param string|null $selector Optional CSS selector to specify which elements should be filtered.
+     * @param bool $allow Whitelist or blacklist tags.
      * @param int $flags Optional flags for HTML parsing and error handling, defaults to LIBXML_NOERROR | LIBXML_HTML_NOIMPLIED.
      *
      * @return string The sanitized HTML content.
