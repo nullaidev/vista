@@ -185,8 +185,8 @@ Sanitize HTML from using the rendering engine's `escHtml()`:
         <ul>
             <?php foreach ($menu ?? [] as $item): ?>
                 <li>
-                    <a href="#" title="<?= $this->escAttr($item) ?>">
-                        <?= $this->escHtml($item) ?>       
+                    <a href="#" title="<?= \Nullai\Vista\SanitizeHtml::escAttr($item) ?>">
+                        <?= \Nullai\Vista\SanitizeHtml::escHtml($item) ?>       
                     </a>
                 </li>
             <?php endforeach; ?>
@@ -209,7 +209,7 @@ Sanitize data and encode it as JSON using thw rendering engine's `escJson()`:
 <?php $this->section('scripts'); ?>
 <script>
     // Safely embed JSON in a JavaScript variable
-    console.log(<?= $this->escJson(['site' => '<My Site>']) ?>);
+    console.log(<?= \Nullai\Vista\SanitizeHtml::escJson(['site' => '<My Site>']) ?>);
 </script>
 <?php $this->end(); ?>
 ```

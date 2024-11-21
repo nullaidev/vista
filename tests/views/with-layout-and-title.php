@@ -13,7 +13,7 @@ $this->includeIf(true,'test-php-short-tag'); ?>
 <?php $this->section('scripts'); ?>
 <script>
     // Safely embed JSON in a JavaScript variable
-    console.log(<?= $this->escJson(['site' => '<My Site>']) ?>);
+    console.log(<?= \Nullai\Vista\SanitizeHtml::escJson(['site' => '<My Site>']) ?>);
 </script>
 <?php $this->end(); ?>
 

@@ -1,1 +1,1 @@
-<?= $this->escHtml("test file &");
+<?= \Nullai\Vista\SanitizeHtml::escHtml("test file &");
