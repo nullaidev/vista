@@ -1,1 +1,1 @@
-<?= \Nullai\Vista\SanitizeHtml::escHtml("test file &");
+<?= "test file &";

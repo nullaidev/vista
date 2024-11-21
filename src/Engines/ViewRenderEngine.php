@@ -2,7 +2,6 @@
 
 namespace Nullai\Vista\Engines;
 
-use Nullai\Vista\SanitizeHtml;
 use Nullai\Vista\View;
 
 class ViewRenderEngine implements \Stringable

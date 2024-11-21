@@ -43,14 +43,14 @@ class TestVista extends TestCase
     {
         $view = new View('test');
 
-        $this->assertStringContainsString('test file &amp;', $view->content());
+        $this->assertStringContainsString('test file &', $view->content());
     }
 
     public function testViewContentRelativeLookup()
     {
         $view = new View(':test');
 
-        $this->assertStringContainsString('test file &amp;', $view->content());
+        $this->assertStringContainsString('test file &', $view->content());
     }
 
     public function testViewEngineClass()
@@ -106,7 +106,7 @@ class TestVista extends TestCase
         $this->assertStringStartsWith('<html', $content);
         $this->assertStringContainsString('<title>test title</title>', $content);
         $this->assertStringContainsString('short tag', $content);
-        $this->assertStringContainsString('console.log({"site":"\u003CMy Site\u003E"});', $content);
+        $this->assertStringContainsString('console.log(\'test\');', $content);
         $this->assertStringNotContainsString('test file &amp;', $content);
         $this->assertStringEndsWith('html>', $content);
     }
@@ -116,101 +116,6 @@ class TestVista extends TestCase
         $view = new View('nest.level-two', ['content' => 'nested']);
         $content = $view->content();
 
-        $this->assertEquals('nested3test file &amp;', $content);
-    }
-
-    public function testViewEngineSanitizeAttributes()
-    {
-        $content = \Nullai\Vista\SanitizeHtml::escAttr('<&">');
-        $this->assertEquals('&lt;&amp;&quot;&gt;', $content);
-    }
-
-    public function testViewEngineSanitizeHtml()
-    {
-        $content = \Nullai\Vista\SanitizeHtml::escHtml('<&">');
-        $this->assertEquals('&lt;&amp;"&gt;', $content);
-    }
-
-    public function testViewEngineSanitizeJson()
-    {
-        $content = \Nullai\Vista\SanitizeHtml::escJson(['site' => '<My <a> " & Site> & " >>']);
-        $this->assertEquals('{"site":"\u003CMy \u003Ca\u003E \u0022 \u0026 Site\u003E \u0026 \u0022 \u003E\u003E"}', $content);
-    }
-
-    public function testViewEngineAllowTags()
-    {
-        $content = \Nullai\Vista\SanitizeHtml::allowTags(
-            "<script>alert('test');</script><a href=\"<script></script>\">Link</a>",
-            ['a' => []]
-        );
-        $this->assertEquals('<a>Link</a>', $content);
-    }
-
-    public function testViewEngineAllowTagsWithAttributes()
-    {
-        $content = \Nullai\Vista\SanitizeHtml::allowTags(
-            "<script>alert('test');</script><A HREF=\"'#'\" styLe='<script>alert(\"true\");</script>'>Link</A>",
-            'a:href|style,br,p,ol,ul,figure:src'
-        );
-        $this->assertEquals('<a href="\'#\'" style="<script>alert(&quot;true&quot;);</script>">Link</a>', $content);
-
-        $content = \Nullai\Vista\SanitizeHtml::allowTags(
-            "<script>alert('test');</script><A HREF='#' styLe='content: \"main\"'>Link</A><br>",
-            'a:href|style,br'
-        );
-        $this->assertEquals('<a href="#" style="content: &quot;main&quot;">Link</a><br>', $content);
-    }
-
-    public function testViewEngineAllowTagsWithTextareaAttributes()
-    {
-        $content = \Nullai\Vista\SanitizeHtml::allowTags(
-            '<textarea value="some value"><script>alert(\'test\');</script></textarea>',
-            'textarea'
-        );
-        $this->assertEquals('<textarea>&lt;script&gt;alert(\'test\');&lt;/script&gt;</textarea>', $content);
-
-        $content = \Nullai\Vista\SanitizeHtml::allowTags(
-            '<textarea value="<script>alert(\'test\');</script>"><script>alert(\'test\');</script></textarea>',
-            'textarea:value'
-        );
-        $this->assertEquals('<textarea value="<script>alert(\'test\');</script>">&lt;script&gt;alert(\'test\');&lt;/script&gt;</textarea>', $content);
-    }
-
-    public function testViewEngineFilterTagsClass()
-    {
-        $content = \Nullai\Vista\SanitizeHtml::allowTags(
-            '<textarea><script>alert(\'test\');</script></textarea>',
-            new FilterBasicTags()->add('textarea', [])
-        );
-        $this->assertEquals('<textarea>&lt;script&gt;alert(\'test\');&lt;/script&gt;</textarea>', $content);
-
-        $content = \Nullai\Vista\SanitizeHtml::allowTags(
-            '<textarea><script>alert(\'test\');</script></textarea>',
-            new FilterBasicTags()
-        );
-        $this->assertEquals('', $content);
-
-        $content = \Nullai\Vista\SanitizeHtml::allowTags(
-            '<a class="hover:mt-0"></a>',
-            new FilterBasicTags()
-        );
-        $this->assertEquals('<a class="hover:mt-0"></a>', $content);
-
-        $content = \Nullai\Vista\SanitizeHtml::allowTags(
-            html: '<a></a>',
-            tags: new FilterBasicTags(),
-            allow: false
-        );
-        $this->assertEquals('', $content);
-    }
-
-    public function testViewEngineFilterTagsClassBlacklist()
-    {
-        $content = \Nullai\Vista\SanitizeHtml::allowTags(
-            html: '<a></a><iframe></iframe><script></script>',
-            tags: 'iframe,script',
-            allow: false
-        );
-        $this->assertEquals('<a></a>', $content);
+        $this->assertEquals('nested3test file &', $content);
     }
 }
