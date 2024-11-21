@@ -10,7 +10,7 @@ Vista is a minimalist PHP view engine that focuses on performance and simplicity
 
 ## Key Features
 
-Vista is only two files and very capable:
+Vista is only five files and very capable:
 
 - **No Compilation Required**: Renders views directly which makes debugging simple.
 - **Lightning Fast**: Optimized for speed, with minimal overhead.
@@ -20,7 +20,7 @@ Vista is only two files and very capable:
 - **Partial Rendering**: Modularize your views with include and section methods.
 - **Scoped Data Passing**: Pass variables to views with isolated scopes for security and clarity.
 - **Extensible**: Works seamlessly with other PHP frameworks or custom solutions.
-- **Sanitize**: Sanitize raw HTML, Attributes, and JSON.
+- **Sanitize**: Sanitize raw HTML, attributes, whitelist HTML tags, and JSON.
 
 ## Installation
 
@@ -170,7 +170,7 @@ Inside `sidebar.php`, the `$menu` array will be accessible.
 
 ## Sanitization: Raw HTML, Attributes, and JSON
 
-Sanitize HTML from using the rendering engine's `escHtml()`:
+Sanitize HTML from using `\Nullai\Vista\SanitizeHtml::escHtml()`:
 
 ```php
 <?php
@@ -195,7 +195,7 @@ Sanitize HTML from using the rendering engine's `escHtml()`:
 </aside>
 ```
 
-Sanitize data and encode it as JSON using thw rendering engine's `escJson()`:
+Sanitize data and encode it as JSON using `\Nullai\Vista\SanitizeHtml::escJson()`:
 
 ```php
 <?php
@@ -212,6 +212,17 @@ Sanitize data and encode it as JSON using thw rendering engine's `escJson()`:
     console.log(<?= \Nullai\Vista\SanitizeHtml::escJson(['site' => '<My Site>']) ?>);
 </script>
 <?php $this->end(); ?>
+```
+
+Sanitize and allow specific HTML tags and attributes with `\Nullai\Vista\SanitizeHtml::allowTags()`:
+
+```php
+<?php
+echo \Nullai\Vista\SanitizeHtml::allowTags(
+    html: '<p><a href="#" class="underline">Link</a><p>',
+    tags: 'a:href,class,p',
+    allow: false
+);
 ```
 
 ## Advanced Include Features
