@@ -20,7 +20,7 @@ Vista is only five files and very capable:
 - **Partial Rendering**: Modularize your views with include and section methods.
 - **Scoped Data Passing**: Pass variables to views with isolated scopes for security and clarity.
 - **Extensible**: Works seamlessly with other PHP frameworks or custom solutions.
-- **Sanitize**: Sanitize raw HTML, attributes, whitelist HTML tags, and JSON.
+- **Sanitize**: Sanitize raw HTML, attributes, and JSON.
 
 ## Installation
 
