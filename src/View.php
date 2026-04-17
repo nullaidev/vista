@@ -35,12 +35,17 @@ class View implements \Stringable
     }
 
     /**
-     * View constructor.
+     * Resolve a view identifier into a file on disk and bind its data.
      *
-     * Take a custom file location or dot notation of view location.
+     * `$view` accepts dot syntax (`__DIR__:subfolder.file-name` or
+     * `subfolder.file-name`) or a direct file path. Plain dot notation is
+     * resolved against `NULLAI_VISTA_VIEWS_FOLDER`. The engine is picked up
+     * from `NULLAI_VISTA_ENGINE` when defined, otherwise defaults to
+     * {@see ViewRenderEngine}.
      *
      * @param string $view dot syntax (__DIR__:subfolder.file-name or subfolder.file-name) or specific file path
-     * @param array $data
+     * @param array<string, mixed> $data Template variables extracted into
+     *     the view's scope at render time.
      */
     public function __construct(string $view, array $data = [])
     {
