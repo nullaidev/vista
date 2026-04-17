@@ -84,7 +84,7 @@ class ViewRenderEngine implements \Stringable
     {
         $_data = $this->view->data;
 
-        extract($_data);
+        extract($_data, EXTR_SKIP);
         include ( $this->view->fullPath );
 
         if($this->layout) {
