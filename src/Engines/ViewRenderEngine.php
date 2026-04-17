@@ -46,7 +46,7 @@ class ViewRenderEngine implements \Stringable
             $view = $this->view->folder . '/' . pathinfo($this->view->file, PATHINFO_DIRNAME) . $view;
         }
 
-        $_view = $view instanceof View ?: new View($view, $data);
+        $_view = $view instanceof View ? $view : new View($view, $data);
         $_data = $_view->data;
         $_parent_view = $this->view;
 
