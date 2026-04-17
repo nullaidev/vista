@@ -76,9 +76,17 @@ class View implements \Stringable
 
     public function content(): string
     {
+        $bufferLevel = ob_get_level();
         ob_start();
-        $this->render();
-        return ob_get_clean();
+
+        try {
+            $this->render();
+            return ob_get_clean();
+        } finally {
+            if(ob_get_level() > $bufferLevel) {
+                ob_end_clean();
+            }
+        }
     }
 
     public function __toString() : string

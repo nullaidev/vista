@@ -145,4 +145,32 @@ class TestVista extends TestCase
         $this->assertStringContainsString('test file', $content);
         $this->assertStringEndsWith(PHP_EOL . '<footer>', $content);
     }
+
+    public function testViewContentClosesItsOwnBufferWhenRenderThrows()
+    {
+        $view = new View('missing-view');
+        $bufferLevel = ob_get_level();
+
+        try {
+            $view->content();
+            $this->fail('Expected missing view render to throw.');
+        } catch (\Exception $e) {
+            $this->assertSame($bufferLevel, ob_get_level());
+            $this->assertStringContainsString('missing-view.php not found', $e->getMessage());
+        }
+    }
+
+    public function testViewEngineGetClosesItsOwnBufferWhenRenderThrows()
+    {
+        $engine = new ViewRenderEngine(new View('missing-view'));
+        $bufferLevel = ob_get_level();
+
+        try {
+            $engine->get();
+            $this->fail('Expected missing view render to throw.');
+        } catch (\Exception $e) {
+            $this->assertSame($bufferLevel, ob_get_level());
+            $this->assertStringContainsString('missing-view.php not found', $e->getMessage());
+        }
+    }
 }
