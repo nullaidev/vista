@@ -118,4 +118,21 @@ class TestVista extends TestCase
 
         $this->assertEquals('nested3test file &', $content);
     }
+
+    public function testViewDataDoesNotOverrideEngineLocals()
+    {
+        $view = new View('with-layout', [
+            'content' => 'content body',
+            'layout' => 'overridden',
+            'sections' => ['main' => 'overridden'],
+            'currentSection' => 'overridden',
+            '_data' => 'overridden',
+        ]);
+
+        $content = $view->content();
+
+        $this->assertStringStartsWith('<script>', $content);
+        $this->assertStringContainsString('content body', $content);
+        $this->assertStringEndsWith(PHP_EOL . '<footer>', $content);
+    }
 }
