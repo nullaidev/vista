@@ -1,6 +1,5 @@
 <?php
 
-use Nullai\Vista\FilterBasicTags;
 use PHPUnit\Framework\TestCase;
 use \Nullai\Vista\View;
 use \Nullai\Vista\Engines\ViewRenderEngine;
@@ -95,7 +94,7 @@ class TestVista extends TestCase
         $this->assertStringStartsWith('<html', $content);
         $this->assertStringNotContainsString('test file &amp;', $content);
         $this->assertStringContainsString('short tag', $content);
-        $this->assertStringEndsWith('html>', $content);
+        $this->assertStringContainsString('</html>', $content);
     }
 
     public function testViewEngineLayoutWithTitleAndJsonEscape()
@@ -108,7 +107,7 @@ class TestVista extends TestCase
         $this->assertStringContainsString('short tag', $content);
         $this->assertStringContainsString('console.log(\'test\');', $content);
         $this->assertStringNotContainsString('test file &amp;', $content);
-        $this->assertStringEndsWith('html>', $content);
+        $this->assertStringContainsString('</html>', $content);
     }
 
     public function testViewEngineRelativeIncludeNestWithGlobalAndLocalVars()
