@@ -31,7 +31,7 @@ composer require nullaidev/vista
 
 https://packagist.org/packages/nullaidev/vista
 
-[Read Full Documentation](https://docs.nullai.com/vista/overview)
+[Read Full Documentation](https://docs.nullai.com/v1/vista/overview)
 
 ## Security Vulnerabilities
 
