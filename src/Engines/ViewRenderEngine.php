@@ -108,6 +108,10 @@ class ViewRenderEngine implements \Stringable
     {
         $_data = $this->view->data;
 
+        if(!file_exists($this->view->fullPath)) {
+            throw new \Exception("ViewRenderEngine {$this->view->fullPath} not found");
+        }
+
         extract($_data, EXTR_SKIP);
         include ( $this->view->fullPath );
 
