@@ -40,7 +40,7 @@ class ViewRenderEngine implements \Stringable
         $cb = \Closure::bind(function() use ($_view, $_data, $_parent_view) {
             if(file_exists($_view->fullPath)) {
                 $parent = $_parent_view->data;
-                extract($_data);
+                extract($_data, EXTR_SKIP);
 
                 include $_view->fullPath;
             }
