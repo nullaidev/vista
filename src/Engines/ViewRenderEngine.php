@@ -86,6 +86,10 @@ class ViewRenderEngine implements \Stringable
 
     public function end() : void
     {
+        if(!isset($this->currentSection)) {
+            throw new \LogicException('Cannot call end() before section() has opened a section.');
+        }
+
         $this->sections[$this->currentSection] = ob_get_clean();
     }
 
