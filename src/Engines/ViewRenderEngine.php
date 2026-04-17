@@ -54,14 +54,16 @@ class ViewRenderEngine implements \Stringable
         $_view->ext = $_view->ext ?: $this->view->ext;
 
         $cb = \Closure::bind(function() use ($_view, $_data, $_parent_view) {
-            if(file_exists($_view->fullPath)) {
-                // Exposes the parent view's data to the included template so
-                // partials can reach up for shared context.
-                $parent = $_parent_view->data;
-                extract($_data, EXTR_SKIP);
-
-                include $_view->fullPath;
+            if(!file_exists($_view->fullPath)) {
+                throw new \Exception("ViewRenderEngine {$_view->fullPath} not found");
             }
+
+            // Exposes the parent view's data to the included template so
+            // partials can reach up for shared context.
+            $parent = $_parent_view->data;
+            extract($_data, EXTR_SKIP);
+
+            include $_view->fullPath;
         }, $this);
 
         $cb();
