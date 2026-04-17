@@ -26,7 +26,7 @@ class ViewRenderEngine implements \Stringable
 
     public function include(string|View $view, array $data = []) : void
     {
-        if(str_starts_with($view, ':')) {
+        if(is_string($view) && str_starts_with($view, ':')) {
             $view = $this->view->folder . '/' . pathinfo($this->view->file, PATHINFO_DIRNAME) . $view;
         }
 
