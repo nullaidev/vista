@@ -24,6 +24,22 @@ class ViewRenderEngine implements \Stringable
         $this->view = $view;
     }
 
+    /**
+     * Pulls a template part into the current view.
+     *
+     * Any data passed in is extracted into the included template's scope so the
+     * partial can reference those values directly as variables. The including
+     * (parent) view's data remains accessible inside the partial via the
+     * `$parent` variable, allowing partials to read parent context without
+     * colliding with their own extracted variables.
+     *
+     * @param string|View $view The view to include, which can be a string path or a View object.
+     *                          If the string starts with ":", it is resolved relative to the parent view.
+     * @param array $data An associative array of data to be extracted and made available to the included view.
+     *                    Defaults to an empty array.
+     *
+     * @return void
+     */
     public function include(string|View $view, array $data = []) : void
     {
         if(is_string($view) && str_starts_with($view, ':')) {
@@ -39,6 +55,8 @@ class ViewRenderEngine implements \Stringable
 
         $cb = \Closure::bind(function() use ($_view, $_data, $_parent_view) {
             if(file_exists($_view->fullPath)) {
+                // Exposes the parent view's data to the included template so
+                // partials can reach up for shared context.
                 $parent = $_parent_view->data;
                 extract($_data, EXTR_SKIP);
 
