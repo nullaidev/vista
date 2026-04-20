@@ -1,6 +1,35 @@
 #!/usr/bin/env php
 <?php
 
+/**
+ * Vista CLI — installs the bundled AI skill into your assistant's skill path.
+ *
+ * Usage:
+ *   vendor/bin/vista install-skill [options]
+ *
+ * Options:
+ *   --target=claude     Claude Code only.
+ *                         user    -> ~/.claude/skills/vista/SKILL.md
+ *                         project -> ./.claude/skills/vista/SKILL.md
+ *   --target=agents     agentskills.io-compliant tools only
+ *                       (OpenAI Codex, Cursor, Gemini CLI, OpenHands, etc.).
+ *                         user    -> ~/.agents/skills/vista/SKILL.md
+ *                         project -> ./.agents/skills/vista/SKILL.md
+ *   --target=chatgpt    Alias for --target=agents.
+ *   --target=all        Install to both claude and agents paths. (default)
+ *
+ *   --scope=user        Install into your home directory. (default)
+ *   --scope=project     Install into the current working directory.
+ *
+ *   -f, --force         Overwrite an existing skill file.
+ *   -h, --help          Show the full help text.
+ *
+ * Examples:
+ *   vendor/bin/vista install-skill --scope=project
+ *   vendor/bin/vista install-skill --target=claude --scope=user
+ *   vendor/bin/vista install-skill --target=agents --scope=project --force
+ */
+
 declare(strict_types=1);
 
 $command = $argv[1] ?? null;
@@ -17,15 +46,15 @@ if ($command !== 'install-skill') {
 }
 
 $scope  = 'user';
-$target = 'claude';
+$target = 'all';
 $force  = false;
 
 for ($i = 2; $i < $argc; $i++) {
     $arg = $argv[$i];
     if (preg_match('/^--scope=(user|project)$/', $arg, $m)) {
         $scope = $m[1];
-    } elseif (preg_match('/^--target=(claude)$/', $arg, $m)) {
-        $target = $m[1];
+    } elseif (preg_match('/^--target=(claude|agents|chatgpt|all)$/', $arg, $m)) {
+        $target = $m[1] === 'chatgpt' ? 'agents' : $m[1];
     } elseif ($arg === '--force' || $arg === '-f') {
         $force = true;
     } else {
@@ -43,31 +72,48 @@ if (!is_file($source)) {
     exit(1);
 }
 
-$destinationDir = resolveDestination($scope, $target);
-$destination    = $destinationDir . '/SKILL.md';
+$targets = $target === 'all' ? ['claude', 'agents'] : [$target];
+$installed = [];
+$errors    = 0;
 
-if (is_file($destination) && !$force) {
-    fwrite(STDERR, "Skill already installed at: {$destination}\nPass --force to overwrite.\n");
-    exit(1);
+foreach ($targets as $t) {
+    $destination = resolveDestination($scope, $t);
+
+    if (is_file($destination) && !$force) {
+        fwrite(STDERR, "Skill already installed at: {$destination}\nPass --force to overwrite.\n");
+        $errors++;
+        continue;
+    }
+
+    $destinationDir = dirname($destination);
+    if (!is_dir($destinationDir) && !mkdir($destinationDir, 0755, true) && !is_dir($destinationDir)) {
+        fwrite(STDERR, "Failed to create directory: {$destinationDir}\n");
+        $errors++;
+        continue;
+    }
+
+    if (!copy($source, $destination)) {
+        fwrite(STDERR, "Failed to copy skill to: {$destination}\n");
+        $errors++;
+        continue;
+    }
+
+    $installed[] = [$t, $destination];
 }
 
-if (!is_dir($destinationDir) && !mkdir($destinationDir, 0755, true) && !is_dir($destinationDir)) {
-    fwrite(STDERR, "Failed to create directory: {$destinationDir}\n");
-    exit(1);
+foreach ($installed as [$t, $destination]) {
+    echo "Installed Vista skill ({$t}, {$scope}) to: {$destination}\n";
 }
 
-if (!copy($source, $destination)) {
-    fwrite(STDERR, "Failed to copy skill to: {$destination}\n");
-    exit(1);
-}
-
-echo "Installed Vista skill to: {$destination}\n";
+exit($errors > 0 && empty($installed) ? 1 : 0);
 
 function resolveDestination(string $scope, string $target): string
 {
     return match ([$scope, $target]) {
-        ['user', 'claude']    => rtrim(getHome(), '/') . '/.claude/skills/vista',
-        ['project', 'claude'] => getcwd() . '/.claude/skills/vista',
+        ['user', 'claude']     => rtrim(getHome(), '/') . '/.claude/skills/vista/SKILL.md',
+        ['project', 'claude']  => getcwd() . '/.claude/skills/vista/SKILL.md',
+        ['user', 'agents']     => rtrim(getHome(), '/') . '/.agents/skills/vista/SKILL.md',
+        ['project', 'agents']  => getcwd() . '/.agents/skills/vista/SKILL.md',
     };
 }
 
@@ -93,14 +139,31 @@ Commands:
   install-skill        Install the Vista AI skill for your assistant.
 
 Options:
-  --scope=user         Install into \$HOME (default).
-  --scope=project      Install into the current project's .claude/skills/.
-  --target=claude      Claude Code (default; currently the only target).
-  -f, --force          Overwrite an existing skill file.
+  --target=claude      Install to Claude Code's skill path.
+                         user    -> ~/.claude/skills/vista/SKILL.md
+                         project -> ./.claude/skills/vista/SKILL.md
+  --target=agents      Install to the universal agentskills.io path
+                       (OpenAI Codex, Cursor, Gemini CLI, OpenHands, etc.).
+                         user    -> ~/.agents/skills/vista/SKILL.md
+                         project -> ./.agents/skills/vista/SKILL.md
+  --target=chatgpt     Alias for --target=agents (for OpenAI Codex).
+  --target=all         Install to both claude and agents paths (default).
+
+  --scope=user         Install into your home directory (default).
+  --scope=project      Install into the current project.
+
+  -f, --force          Overwrite an existing skill.
   -h, --help           Show this help.
 
-Example:
-  vendor/bin/vista install-skill --scope=project
+Examples:
+  # Cover every agentskills.io-compliant tool + Claude Code, project-local:
+  vendor/bin/vista install-skill --target=all --scope=project
+
+  # Just Claude Code, user-wide:
+  vendor/bin/vista install-skill --target=claude --scope=user
+
+  # Just OpenAI Codex / Cursor / Gemini CLI, project-local:
+  vendor/bin/vista install-skill --target=agents --scope=project
 
 USAGE);
 }

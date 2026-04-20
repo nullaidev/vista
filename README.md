@@ -33,6 +33,27 @@ https://packagist.org/packages/nullaidev/vista
 
 [Read Full Documentation](https://docs.nullai.com/v1/vista/overview)
 
+## AI Skill
+
+Vista ships with an [agentskills.io](https://agentskills.io)-compliant skill that teaches your assistant how the view engine works — path resolution, layouts, sections, includes, `$parent`, and the exception taxonomy. It works with Claude Code, OpenAI Codex, Cursor, Gemini CLI, OpenHands, Goose, and any other tool that reads the `SKILL.md` convention.
+
+Install it for every tool in one command:
+
+```
+vendor/bin/vista install-skill --scope=project
+```
+
+Swap `--scope=user` to install into your home directory so every project picks it up. See `vendor/bin/vista --help` for finer-grained targets and flags.
+
+### Using the skill
+
+Most tools pick up skills automatically once they exist on disk — start (or restart) a fresh agent session after installing, and the skill becomes available. Trigger it by working on code that touches Vista (e.g. open a file that uses `new View(...)`, `$this->layout()`, or anything under `views/`), or mention Vista in your prompt — the skill's description matches and the agent loads it.
+
+If you want to invoke it manually:
+
+- **Claude Code** — type `/vista` in the chat.
+- **OpenAI Codex / Cursor / Gemini CLI** — ask the agent to "use the vista skill" (or equivalent phrasing supported by your tool).
+
 ## Security Vulnerabilities
 
 If you discover a security vulnerability within Vista, please submit an issue on GitHub. All security vulnerabilities will be promptly addressed.
