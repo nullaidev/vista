@@ -40,19 +40,22 @@ Vista ships with an [agentskills.io](https://agentskills.io)-compliant skill tha
 Install it for every tool in one command:
 
 ```
-vendor/bin/vista install-skill --scope=project
+vendor/bin/vista install-skill
 ```
 
-Swap `--scope=user` to install into your home directory so every project picks it up. See `vendor/bin/vista --help` for finer-grained targets and flags.
+Pass `--scope=user` to install into your home directory so every project picks it up. See `vendor/bin/vista --help` for finer-grained targets and flags.
 
 ### Using the skill
 
-Most tools pick up skills automatically once they exist on disk — start (or restart) a fresh agent session after installing, and the skill becomes available. Trigger it by working on code that touches Vista (e.g. open a file that uses `new View(...)`, `$this->layout()`, or anything under `views/`), or mention Vista in your prompt — the skill's description matches and the agent loads it.
+Start (or restart) your agent session after installing so it picks up the new skill. Most tools auto-load the skill once your prompt or the files you're editing match its description — if you'd rather trigger it explicitly, paste this at the top of your conversation:
 
-If you want to invoke it manually:
+```
+Use the vista skill to help me work with the Nullai Vista PHP view engine
+(new View(...), ViewRenderEngine, $this->layout(), $this->section(),
+$this->include(), and templates under the views/ folder).
+```
 
-- **Claude Code** — type `/vista` in the chat.
-- **OpenAI Codex / Cursor / Gemini CLI** — ask the agent to "use the vista skill" (or equivalent phrasing supported by your tool).
+In **Claude Code** you can also just type `/vista` to invoke it directly.
 
 ## Security Vulnerabilities
 

@@ -18,8 +18,8 @@
  *   --target=chatgpt    Alias for --target=agents.
  *   --target=all        Install to both claude and agents paths. (default)
  *
- *   --scope=user        Install into your home directory. (default)
- *   --scope=project     Install into the current working directory.
+ *   --scope=project     Install into the current working directory. (default)
+ *   --scope=user        Install into your home directory.
  *
  *   -f, --force         Overwrite an existing skill file.
  *   -h, --help          Show the full help text.
@@ -45,7 +45,7 @@ if ($command !== 'install-skill') {
     exit(1);
 }
 
-$scope  = 'user';
+$scope  = 'project';
 $target = 'all';
 $force  = false;
 
@@ -149,8 +149,8 @@ Options:
   --target=chatgpt     Alias for --target=agents (for OpenAI Codex).
   --target=all         Install to both claude and agents paths (default).
 
-  --scope=user         Install into your home directory (default).
-  --scope=project      Install into the current project.
+  --scope=project      Install into the current project (default).
+  --scope=user         Install into your home directory.
 
   -f, --force          Overwrite an existing skill.
   -h, --help           Show this help.
