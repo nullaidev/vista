@@ -171,10 +171,54 @@ $this->include(new View('mail.header', ['logo' => $logo]));
 
 Inside the partial:
 - Keys in `$data` are extracted as local variables (`EXTR_SKIP`).
-- `$parent` (array) exposes the including view's `$data` — use it to reach up without re-passing everything.
+- `$parent` (array) exposes the **root** view's `$data` — see below.
 - Keys that collide with engine internals (`_view`, `_data`, `_parent_view`, `parent`) are silently dropped by `EXTR_SKIP` — rename them.
 
 Throws `\Exception` if the included file does not exist.
+
+### `$parent` — reading up from a partial
+
+Every time Vista includes a partial, it injects a local variable `$parent` into that partial's scope. It's an **array** — a snapshot of the root view's `$data`.
+
+Key points:
+
+- **`$parent` is an `array`, not a `View` object.** It's exactly the `$data` array that was passed to the top-level `new View(..., $data)`. Access keys like any array: `$parent['user']`, `$parent['csrf']`.
+- **It is the *root* view's data, not the immediate includer's.** If `root` includes `A`, which includes `B`, which includes `C`, then inside `A`, `B`, and `C` alike, `$parent` is `root`'s data. It does **not** walk one level up per nesting.
+  Need the immediate caller's data instead? Pass it explicitly: `$this->include('child', $_data)` from inside the parent (where `$_data` is the parent's already-extracted data array — or just forward individual keys).
+- **Layouts see it too.** A layout is rendered through the same `include()` path, so `$parent` inside the layout is the root view's `$data`. That's how layouts typically read `title`, `user`, etc., without the child having to re-pass them.
+- **Collisions with `$parent` in your own `$data` are dropped.** Vista assigns `$parent` *before* `extract($data, EXTR_SKIP)`, so a `'parent' => …` key you pass into `include()` is silently skipped. Rename it.
+- **Only populated in partials/layouts.** In the root view itself (the one you passed to `new View()`), `$parent` is undefined — because there is no parent.
+
+Example:
+
+```php
+// app.php — caller
+echo new View('page', [
+    'user' => $currentUser,
+    'csrf' => $token,
+])->content();
+```
+
+```php
+// views/page.php  (root view — $parent is NOT defined here)
+$this->layout('layouts.main');
+$this->include('partials.user-card');
+```
+
+```php
+// views/layouts/main.php  (layout — $parent IS defined)
+?>
+<title>Hello, <?= htmlspecialchars($parent['user']->name) ?></title>
+<input type="hidden" name="csrf" value="<?= $parent['csrf'] ?>">
+<?php
+$this->yield('main');
+```
+
+```php
+// views/partials/user-card.php  (nested partial — $parent IS defined, still root's data)
+?>
+<div>Signed in as <?= htmlspecialchars($parent['user']->name) ?></div>
+```
 
 ### `includeIf(bool $condition, mixed ...$args): bool`
 

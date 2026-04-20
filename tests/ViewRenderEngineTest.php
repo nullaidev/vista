@@ -175,6 +175,37 @@ class ViewRenderEngineTest extends VistaTestCase
         $this->assertStringNotContainsString('LEAKY_FOOTER', $second);
     }
 
+    public function testLayoutIsAppliedOnEveryRenderDespiteReset(): void
+    {
+        // reset() wipes $layout at the top of each render(), so we need to
+        // verify the view file's own $this->layout(...) call still takes
+        // effect on both a first and a repeated render.
+        $view = new View('with-layout', ['content' => 'first']);
+        $engine = new ViewRenderEngine($view);
+
+        $first = $engine->get();
+        $this->assertStringStartsWith('<script>', $first);
+        $this->assertStringContainsString('first', $first);
+        $this->assertStringEndsWith(PHP_EOL . '<footer>', $first);
+
+        $view->data = ['content' => 'second'];
+        $second = $engine->get();
+        $this->assertStringStartsWith('<script>', $second);
+        $this->assertStringContainsString('second', $second);
+        $this->assertStringNotContainsString('first', $second);
+        $this->assertStringEndsWith(PHP_EOL . '<footer>', $second);
+    }
+
+    public function testRenderWithoutLayoutProducesDirectOutput(): void
+    {
+        // reset() empties $layout; if the view file does not call $this->layout(...),
+        // the render path correctly skips the layout branch and returns raw view output.
+        $view = new View('test');
+        $engine = new ViewRenderEngine($view);
+
+        $this->assertSame('test file &', $engine->get());
+    }
+
     public function testResetClearsSectionsLayoutAndCurrentSection(): void
     {
         $engine = new ViewRenderEngine(new View('test'));
