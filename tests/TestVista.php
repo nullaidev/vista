@@ -1,5 +1,7 @@
 <?php
 
+use PHPUnit\Framework\Attributes\PreserveGlobalState;
+use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 use PHPUnit\Framework\TestCase;
 use \Nullai\Vista\View;
 use \Nullai\Vista\Engines\ViewRenderEngine;
@@ -171,5 +173,88 @@ class TestVista extends TestCase
             $this->assertSame($bufferLevel, ob_get_level());
             $this->assertStringContainsString('missing-view.php not found', $e->getMessage());
         }
+    }
+
+    public function testEngineEndThrowsWhenNoSectionOpened()
+    {
+        $engine = new ViewRenderEngine(new View('test'));
+
+        $this->expectException(\LogicException::class);
+        $engine->end();
+    }
+
+    public function testEngineYieldMissingSectionIsSilent()
+    {
+        $engine = new ViewRenderEngine(new View('test'));
+
+        ob_start();
+        $engine->yield('does-not-exist');
+        $output = ob_get_clean();
+
+        $this->assertSame('', $output);
+    }
+
+    public function testEngineIncludeIfFalseReturnsFalseAndSkipsInclude()
+    {
+        $engine = new ViewRenderEngine(new View('test'));
+
+        ob_start();
+        $result = $engine->includeIf(false, 'test');
+        $output = ob_get_clean();
+
+        $this->assertFalse($result);
+        $this->assertSame('', $output);
+    }
+
+    public function testEngineIncludeIfTrueReturnsTrueAndIncludes()
+    {
+        $engine = new ViewRenderEngine(new View('test'));
+
+        ob_start();
+        $result = $engine->includeIf(true, 'test');
+        $output = ob_get_clean();
+
+        $this->assertTrue($result);
+        $this->assertStringContainsString('test file &', $output);
+    }
+
+    public function testEngineToStringRendersContent()
+    {
+        $engine = new ViewRenderEngine(new View('test'));
+
+        $this->assertStringContainsString('test file &', (string) $engine);
+    }
+
+    public function testLayoutCapturesTrailingMarkupAsDunderMainWhenMainSectionSetExplicitly()
+    {
+        $view = new View('with-main-section-and-extra');
+        $content = $view->content();
+
+        $this->assertStringContainsString('MAIN_CONTENT', $content);
+        $this->assertStringContainsString('EXTRA_CONTENT', $content);
+        $this->assertStringContainsString('MAIN_CONTENT|EXTRA_CONTENT', $content);
+    }
+
+    public function testViewPreservesNonPhpExtensionFromDirectPath()
+    {
+        $view = new View(__DIR__ . '/views/test.html');
+
+        $this->assertSame('html', $view->ext);
+        $this->assertStringEndsWith('tests/views/test.html', $view->fullPath);
+        $this->assertStringContainsString('html-ext-content', $view->content());
+    }
+
+    #[RunInSeparateProcess]
+    #[PreserveGlobalState(false)]
+    public function testConstructorUsesCustomEngineFromNullaiVistaEngineConstant()
+    {
+        require_once __DIR__ . '/Support/FakeEngine.php';
+        define('NULLAI_VISTA_ENGINE', \Tests\Support\FakeEngine::class);
+
+        $view = new View('test');
+
+        $this->assertSame(\Tests\Support\FakeEngine::class, $view->engine);
+        $this->assertSame('FAKE_ENGINE_OUTPUT:test', $view->content());
+        $this->assertSame($view, \Tests\Support\FakeEngine::$lastView);
     }
 }
