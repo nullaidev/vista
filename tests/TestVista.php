@@ -257,4 +257,149 @@ class TestVista extends TestCase
         $this->assertSame('FAKE_ENGINE_OUTPUT:test', $view->content());
         $this->assertSame($view, \Tests\Support\FakeEngine::$lastView);
     }
+
+    public function testEngineSectionsLeakAcrossRepeatedGetCalls()
+    {
+        // Documents a likely bug: $sections is not reset between render() calls,
+        // so a section populated by the first render survives into the second
+        // even when the second render does not write to it.
+        $view = new View('conditional-footer', ['include_footer' => true]);
+        $engine = new ViewRenderEngine($view);
+
+        $first = $engine->get();
+        $this->assertStringContainsString('LEAKY_FOOTER', $first);
+
+        $view->data = ['include_footer' => false];
+        $second = $engine->get();
+
+        $this->assertStringContainsString('LEAKY_FOOTER', $second, 'Leak documented: sections persist across renders.');
+    }
+
+    public function testViewContentDoesNotLeakSectionsBecauseEachCallBuildsFreshEngine()
+    {
+        // View::render() instantiates a new engine each call, so the leak above
+        // does not reach through View::content(). This pins that guarantee.
+        $view = new View('conditional-footer', ['include_footer' => true]);
+        $this->assertStringContainsString('LEAKY_FOOTER', $view->content());
+
+        $view->data = ['include_footer' => false];
+        $this->assertStringNotContainsString('LEAKY_FOOTER', $view->content());
+    }
+
+    public function testIncludeIfAcceptsViewInstance()
+    {
+        $engine = new ViewRenderEngine(new View('test'));
+
+        ob_start();
+        $result = $engine->includeIf(true, new View('test'));
+        $output = ob_get_clean();
+
+        $this->assertTrue($result);
+        $this->assertStringContainsString('test file &', $output);
+    }
+
+    public function testIncludeIfForwardsDataToIncludedView()
+    {
+        $engine = new ViewRenderEngine(new View('test'));
+
+        ob_start();
+        $engine->includeIf(true, 'echo-var', ['label' => 'forwarded']);
+        $output = ob_get_clean();
+
+        $this->assertSame('forwarded', $output);
+    }
+
+    public function testRelativeIncludeResolvesWhenParentIsTopLevel()
+    {
+        $view = new View('relative-include-top');
+
+        $this->assertStringContainsString('test file &', $view->content());
+    }
+
+    public function testIncludeDataDoesNotClobberEngineInternalLocals()
+    {
+        $engine = new ViewRenderEngine(new View('test'));
+
+        ob_start();
+        $engine->include('reveal-locals', [
+            '_view' => 'clobbered',
+            '_data' => 'clobbered',
+            '_parent_view' => 'clobbered',
+            'parent' => 'clobbered',
+        ]);
+        $output = ob_get_clean();
+
+        $this->assertSame('VIEW_OK|DATA_OK|PARENT_VIEW_OK|PARENT_OK', $output);
+    }
+
+    public function testOpeningSecondSectionBeforeEndingFirstOrphansEarlierBuffer()
+    {
+        // Opening a nested section is not guarded: end() closes only the inner
+        // buffer, leaving the outer section() buffer dangling. Documented so a
+        // future fix (throw on nested section(), or auto-end) has a regression test.
+        $engine = new ViewRenderEngine(new View('test'));
+        $baselineLevel = ob_get_level();
+
+        $engine->section('outer');
+        echo 'OUTER';
+        $engine->section('inner');
+        echo 'INNER';
+        $engine->end();
+
+        ob_start();
+        $engine->yield('inner');
+        $this->assertSame('INNER', ob_get_clean());
+
+        ob_start();
+        $engine->yield('outer');
+        $this->assertSame('', ob_get_clean(), '"outer" was never captured.');
+
+        while(ob_get_level() > $baselineLevel) {
+            ob_end_clean();
+        }
+    }
+
+    public function testReopeningClosedSectionOverwritesPreviousContent()
+    {
+        $engine = new ViewRenderEngine(new View('test'));
+
+        $engine->section('a');
+        echo 'FIRST';
+        $engine->end();
+
+        $engine->section('a');
+        echo 'SECOND';
+        $engine->end();
+
+        ob_start();
+        $engine->yield('a');
+        $this->assertSame('SECOND', ob_get_clean());
+    }
+
+    public function testCurrentSectionPersistsAfterEndAllowingStrayEndToEatOuterBuffer()
+    {
+        // Likely bug: end() does not unset $currentSection, so a stray extra
+        // end() passes the isset() guard and silently ob_get_clean()s whatever
+        // buffer is currently topmost — potentially the caller's buffer.
+        $engine = new ViewRenderEngine(new View('test'));
+        $baselineLevel = ob_get_level();
+
+        $engine->section('a');
+        echo 'FIRST';
+        $engine->end();
+
+        ob_start();
+        echo 'OUTER_BUFFER';
+        $engine->end();
+
+        ob_start();
+        $engine->yield('a');
+        $captured = ob_get_clean();
+
+        $this->assertSame('OUTER_BUFFER', $captured, 'Stray end() swallowed and stored the outer buffer.');
+
+        while(ob_get_level() > $baselineLevel) {
+            ob_end_clean();
+        }
+    }
 }
