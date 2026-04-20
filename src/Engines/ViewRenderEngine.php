@@ -4,12 +4,13 @@ namespace Nullai\Vista\Engines;
 
 use Nullai\Vista\View;
 
-class ViewRenderEngine implements \Stringable
+class ViewRenderEngine implements \Stringable, RenderEngineInterface
 {
     protected View $view {
         get => $this->view;
     }
 
+    /** @var array<string, string|null> */
     protected array $sections = [];
     protected string $currentSection;
     protected string $layout = '';
@@ -35,7 +36,7 @@ class ViewRenderEngine implements \Stringable
      *
      * @param string|View $view The view to include, which can be a string path or a View object.
      *                          If the string starts with ":", it is resolved relative to the parent view.
-     * @param array $data An associative array of data to be extracted and made available to the included view.
+     * @param array<string, mixed> $data An associative array of data to be extracted and made available to the included view.
      *                    Defaults to an empty array.
      *
      * @return void
@@ -78,7 +79,7 @@ class ViewRenderEngine implements \Stringable
         return $condition;
     }
 
-    public function section($name) : void
+    public function section(string $name) : void
     {
         $this->currentSection = $name;
         ob_start();
@@ -90,10 +91,15 @@ class ViewRenderEngine implements \Stringable
             throw new \LogicException('Cannot call end() before section() has opened a section.');
         }
 
-        $this->sections[$this->currentSection] = ob_get_clean();
+        $captured = ob_get_clean();
+        if($captured === false) {
+            throw new \RuntimeException('Expected an active section output buffer.');
+        }
+
+        $this->sections[$this->currentSection] = $captured;
     }
 
-    public function yield($section) : void
+    public function yield(string $section) : void
     {
         echo $this->sections[$section] ?? null;
     }
@@ -116,7 +122,11 @@ class ViewRenderEngine implements \Stringable
         include ( $this->view->fullPath );
 
         if($this->layout) {
-            $html = trim(ob_get_clean());
+            $captured = ob_get_clean();
+            if($captured === false) {
+                throw new \RuntimeException('Expected an active output buffer while applying layout.');
+            }
+            $html = trim($captured);
 
             if(empty($this->sections['main'])) {
                 $this->sections['main'] = $html;
@@ -140,7 +150,11 @@ class ViewRenderEngine implements \Stringable
 
         try {
             $this->render();
-            return ob_get_clean();
+            $output = ob_get_clean();
+            if($output === false) {
+                throw new \RuntimeException('Expected an active output buffer.');
+            }
+            return $output;
         } finally {
             if(ob_get_level() > $bufferLevel) {
                 ob_end_clean();

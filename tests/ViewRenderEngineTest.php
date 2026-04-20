@@ -1,5 +1,7 @@
 <?php
 
+namespace Tests;
+
 use Nullai\Vista\Engines\ViewRenderEngine;
 use Nullai\Vista\View;
 
@@ -137,7 +139,7 @@ class ViewRenderEngineTest extends VistaTestCase
 
         ob_start();
         $result = $engine->includeIf(true, 'test');
-        $output = ob_get_clean();
+        $output = $this->cleanBuffer();
 
         $this->assertTrue($result);
         $this->assertStringContainsString('test file &', $output);
@@ -191,7 +193,7 @@ class ViewRenderEngineTest extends VistaTestCase
 
         ob_start();
         $result = $engine->includeIf(true, new View('test'));
-        $output = ob_get_clean();
+        $output = $this->cleanBuffer();
 
         $this->assertTrue($result);
         $this->assertStringContainsString('test file &', $output);

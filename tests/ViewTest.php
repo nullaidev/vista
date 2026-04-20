@@ -1,10 +1,13 @@
 <?php
 
+namespace Tests;
+
 use Nullai\Vista\Engines\ViewRenderEngine;
 use Nullai\Vista\View;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\PreserveGlobalState;
 use PHPUnit\Framework\Attributes\RunInSeparateProcess;
+use Tests\Support\FakeEngine;
 
 class ViewTest extends VistaTestCase
 {
@@ -13,6 +16,9 @@ class ViewTest extends VistaTestCase
         $this->assertInstanceOf(View::class, new View('test'));
     }
 
+    /**
+     * @return iterable<string, array{input: string, expectedFile: string, expectedExt: string, expectedContent: string}>
+     */
     public static function provideViewPathInputs(): iterable
     {
         $viewsDir = __DIR__ . '/views';
@@ -86,17 +92,34 @@ class ViewTest extends VistaTestCase
         }
     }
 
+    public function testFolderSetterStripsTrailingDirectorySeparator(): void
+    {
+        $view = new View(__DIR__ . '/views' . DIRECTORY_SEPARATOR . ':test');
+
+        $this->assertStringEndsNotWith(DIRECTORY_SEPARATOR, $view->folder);
+        $this->assertStringEndsWith('tests/views/test.php', $view->fullPath);
+    }
+
+    public function testToStringPropagatesExceptionWhenViewFileMissing(): void
+    {
+        $view = new View('missing-view');
+
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage('missing-view.php not found');
+
+        (string) $view;
+    }
+
     #[RunInSeparateProcess]
     #[PreserveGlobalState(false)]
     public function testConstructorUsesCustomEngineFromNullaiVistaEngineConstant(): void
     {
-        require_once __DIR__ . '/Support/FakeEngine.php';
-        define('NULLAI_VISTA_ENGINE', \Tests\Support\FakeEngine::class);
+        define('NULLAI_VISTA_ENGINE', FakeEngine::class);
 
         $view = new View('test');
 
-        $this->assertSame(\Tests\Support\FakeEngine::class, $view->engine);
+        $this->assertSame(FakeEngine::class, $view->engine);
         $this->assertSame('FAKE_ENGINE_OUTPUT:test', $view->content());
-        $this->assertSame($view, \Tests\Support\FakeEngine::$lastView);
+        $this->assertSame($view, FakeEngine::$lastView);
     }
 }

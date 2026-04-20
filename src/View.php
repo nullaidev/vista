@@ -1,10 +1,12 @@
 <?php
 namespace Nullai\Vista;
 
+use Nullai\Vista\Engines\RenderEngineInterface;
 use Nullai\Vista\Engines\ViewRenderEngine;
 
 class View implements \Stringable
 {
+    /** @var array<string, mixed> */
     public array $data = [] {
         get => $this->data;
         set => $this->data = $value;
@@ -29,6 +31,7 @@ class View implements \Stringable
         get => $this->folder . DIRECTORY_SEPARATOR . $this->file . '.' . $this->ext;
     }
 
+    /** @var class-string<RenderEngineInterface> */
     public string $engine {
         get => $this->engine;
         set => $this->engine = $value;
@@ -81,7 +84,11 @@ class View implements \Stringable
 
         try {
             $this->render();
-            return ob_get_clean();
+            $output = ob_get_clean();
+            if($output === false) {
+                throw new \RuntimeException('Expected an active output buffer.');
+            }
+            return $output;
         } finally {
             if(ob_get_level() > $bufferLevel) {
                 ob_end_clean();

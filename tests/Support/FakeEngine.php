@@ -2,9 +2,10 @@
 
 namespace Tests\Support;
 
+use Nullai\Vista\Engines\RenderEngineInterface;
 use Nullai\Vista\View;
 
-class FakeEngine
+class FakeEngine implements RenderEngineInterface
 {
     public static ?View $lastView = null;
 
