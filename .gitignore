@@ -1,6 +1,7 @@
 .idea
 .env
 .vscode
+.claude
 /vendor
 /node_modules
 composer.lock
