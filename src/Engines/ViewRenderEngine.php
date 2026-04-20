@@ -120,6 +120,11 @@ class ViewRenderEngine implements \Stringable, RenderEngineInterface
 
     public function render() : void
     {
+        // Start from a clean slate so repeated render() calls don't carry state
+        // from a prior render. The view file itself will populate $this->layout,
+        // $this->sections, and $this->currentSection during its own execution
+        // (see the include below) — those mutations are what the layout branch
+        // at the bottom of this method reads.
         $this->reset();
 
         $_data = $this->view->data;
@@ -129,8 +134,14 @@ class ViewRenderEngine implements \Stringable, RenderEngineInterface
         }
 
         extract($_data, EXTR_SKIP);
+
+        // The included view file runs with $this bound to this engine, so calls
+        // like $this->layout(...), $this->section(...)/$this->end(), and
+        // $this->include(...) inside the template mutate engine state mid-render.
+        // Anything checked after this line reflects what the template did.
         include ( $this->view->fullPath );
 
+        // $this->layout is non-empty only if the view file called $this->layout(...).
         if($this->layout) {
             $captured = ob_get_clean();
             if($captured === false) {
