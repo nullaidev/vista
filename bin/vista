@@ -1,0 +1,106 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+$command = $argv[1] ?? null;
+
+if ($command === null || $command === '-h' || $command === '--help' || $command === 'help') {
+    printUsage();
+    exit($command === null ? 1 : 0);
+}
+
+if ($command !== 'install-skill') {
+    fwrite(STDERR, "Unknown command: {$command}\n\n");
+    printUsage();
+    exit(1);
+}
+
+$scope  = 'user';
+$target = 'claude';
+$force  = false;
+
+for ($i = 2; $i < $argc; $i++) {
+    $arg = $argv[$i];
+    if (preg_match('/^--scope=(user|project)$/', $arg, $m)) {
+        $scope = $m[1];
+    } elseif (preg_match('/^--target=(claude)$/', $arg, $m)) {
+        $target = $m[1];
+    } elseif ($arg === '--force' || $arg === '-f') {
+        $force = true;
+    } else {
+        fwrite(STDERR, "Unknown option: {$arg}\n\n");
+        printUsage();
+        exit(1);
+    }
+}
+
+$packageRoot = dirname(__DIR__);
+$source      = $packageRoot . '/skills/vista/SKILL.md';
+
+if (!is_file($source)) {
+    fwrite(STDERR, "Skill source not found: {$source}\n");
+    exit(1);
+}
+
+$destinationDir = resolveDestination($scope, $target);
+$destination    = $destinationDir . '/SKILL.md';
+
+if (is_file($destination) && !$force) {
+    fwrite(STDERR, "Skill already installed at: {$destination}\nPass --force to overwrite.\n");
+    exit(1);
+}
+
+if (!is_dir($destinationDir) && !mkdir($destinationDir, 0755, true) && !is_dir($destinationDir)) {
+    fwrite(STDERR, "Failed to create directory: {$destinationDir}\n");
+    exit(1);
+}
+
+if (!copy($source, $destination)) {
+    fwrite(STDERR, "Failed to copy skill to: {$destination}\n");
+    exit(1);
+}
+
+echo "Installed Vista skill to: {$destination}\n";
+
+function resolveDestination(string $scope, string $target): string
+{
+    return match ([$scope, $target]) {
+        ['user', 'claude']    => rtrim(getHome(), '/') . '/.claude/skills/vista',
+        ['project', 'claude'] => getcwd() . '/.claude/skills/vista',
+    };
+}
+
+function getHome(): string
+{
+    $home = getenv('HOME');
+    if ($home === false || $home === '') {
+        fwrite(STDERR, "Cannot resolve HOME. Use --scope=project or set \$HOME.\n");
+        exit(1);
+    }
+    return $home;
+}
+
+function printUsage(): void
+{
+    fwrite(STDOUT, <<<USAGE
+Vista CLI
+
+Usage:
+  vista install-skill [options]
+
+Commands:
+  install-skill        Install the Vista AI skill for your assistant.
+
+Options:
+  --scope=user         Install into \$HOME (default).
+  --scope=project      Install into the current project's .claude/skills/.
+  --target=claude      Claude Code (default; currently the only target).
+  -f, --force          Overwrite an existing skill file.
+  -h, --help           Show this help.
+
+Example:
+  vendor/bin/vista install-skill --scope=project
+
+USAGE);
+}

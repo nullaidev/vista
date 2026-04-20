@@ -161,11 +161,8 @@ class ViewRenderEngineTest extends VistaTestCase
         $this->assertStringContainsString('MAIN_CONTENT|EXTRA_CONTENT', $content);
     }
 
-    public function testSectionsLeakAcrossRepeatedGetCalls(): void
+    public function testRepeatedGetCallsResetStateBetweenRenders(): void
     {
-        // Documents a likely bug: $sections is not reset between render() calls,
-        // so a section populated by the first render survives into the second
-        // even when the second render does not write to it.
         $view = new View('conditional-footer', ['include_footer' => true]);
         $engine = new ViewRenderEngine($view);
 
@@ -175,7 +172,25 @@ class ViewRenderEngineTest extends VistaTestCase
         $view->data = ['include_footer' => false];
         $second = $engine->get();
 
-        $this->assertStringContainsString('LEAKY_FOOTER', $second, 'Leak documented: sections persist across renders.');
+        $this->assertStringNotContainsString('LEAKY_FOOTER', $second);
+    }
+
+    public function testResetClearsSectionsLayoutAndCurrentSection(): void
+    {
+        $engine = new ViewRenderEngine(new View('test'));
+
+        $engine->section('a');
+        echo 'A';
+        $engine->end();
+
+        $engine->reset();
+
+        ob_start();
+        $engine->yield('a');
+        $this->assertSame('', ob_get_clean(), 'reset() cleared sections.');
+
+        $this->expectException(\LogicException::class);
+        $engine->end();
     }
 
     public function testViewContentDoesNotLeakSectionsBecauseEachCallBuildsFreshEngine(): void
@@ -274,30 +289,15 @@ class ViewRenderEngineTest extends VistaTestCase
         $this->assertSame('SECOND', ob_get_clean());
     }
 
-    public function testCurrentSectionPersistsAfterEndAllowingStrayEndToEatOuterBuffer(): void
+    public function testStrayEndAfterMatchedPairThrows(): void
     {
-        // Likely bug: end() does not unset $currentSection, so a stray extra
-        // end() passes the isset() guard and silently ob_get_clean()s whatever
-        // buffer is currently topmost — potentially the caller's buffer.
         $engine = new ViewRenderEngine(new View('test'));
-        $baselineLevel = ob_get_level();
 
         $engine->section('a');
         echo 'FIRST';
         $engine->end();
 
-        ob_start();
-        echo 'OUTER_BUFFER';
+        $this->expectException(\LogicException::class);
         $engine->end();
-
-        ob_start();
-        $engine->yield('a');
-        $captured = ob_get_clean();
-
-        $this->assertSame('OUTER_BUFFER', $captured, 'Stray end() swallowed and stored the outer buffer.');
-
-        while(ob_get_level() > $baselineLevel) {
-            ob_end_clean();
-        }
     }
 }

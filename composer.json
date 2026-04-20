@@ -16,5 +16,6 @@
     "autoload-dev": {
         "psr-4": {"Tests\\": "tests/"}
     },
+    "bin": ["bin/vista"],
     "minimum-stability": "stable"
 }

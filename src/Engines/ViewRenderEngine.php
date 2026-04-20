@@ -12,7 +12,7 @@ class ViewRenderEngine implements \Stringable, RenderEngineInterface
 
     /** @var array<string, string|null> */
     protected array $sections = [];
-    protected string $currentSection;
+    protected ?string $currentSection = null;
     protected string $layout = '';
 
     /**
@@ -97,6 +97,7 @@ class ViewRenderEngine implements \Stringable, RenderEngineInterface
         }
 
         $this->sections[$this->currentSection] = $captured;
+        $this->currentSection = null;
     }
 
     public function yield(string $section) : void
@@ -110,8 +111,17 @@ class ViewRenderEngine implements \Stringable, RenderEngineInterface
         ob_start();
     }
 
+    public function reset() : void
+    {
+        $this->sections = [];
+        $this->layout = '';
+        $this->currentSection = null;
+    }
+
     public function render() : void
     {
+        $this->reset();
+
         $_data = $this->view->data;
 
         if(!file_exists($this->view->fullPath)) {
