@@ -5,10 +5,11 @@ description: Use when working with the Nullai Vista PHP templating library — r
 
 # Vista templating
 
-Vista is a minimal PHP 8.4 view engine. Two public classes:
+Vista is a minimal PHP 8.4 view engine. Three public classes:
 
 - `Nullai\Vista\View` — addresses a view file on disk and renders it.
 - `Nullai\Vista\Engines\ViewRenderEngine` — default engine; handles layouts, sections, includes.
+- `Nullai\Vista\Assets` — per-render registry for external CSS and JavaScript URLs.
 
 Custom engines implement `Nullai\Vista\Engines\RenderEngineInterface` (one method: `render(): void`).
 
@@ -24,6 +25,11 @@ Custom engines implement `Nullai\Vista\Engines\RenderEngineInterface` (one metho
 | Include a partial               | `$this->include('partials.button', ['label'=>…])` |
 | Include relative to current     | `$this->include(':sidebar')`                      |
 | Include only if a condition     | `$this->includeIf($cond, 'user.badge', [...])`    |
+| Register CSS                    | `Assets::css('/css/app.css')`                     |
+| Register JS                     | `Assets::js('/js/app.js')`                        |
+| Emit CSS tags                   | `echo Assets::renderCss()`                        |
+| Emit JS tags                    | `echo Assets::renderJs()`                         |
+| Override asset versioning       | `Assets::setVersionResolver(fn($p) => '123')`     |
 | Clear engine state for re-use   | `$engine->reset()`                                |
 
 ## Setup
@@ -253,6 +259,196 @@ Low-level entry points:
 
 Normal code calls `View::content()`, which internally builds a fresh engine and calls `get()`.
 
+## Assets (`Nullai\Vista\Assets`)
+
+`Assets` is a tiny static facade over Vista's per-render asset registry. Views,
+partials, nested views, and layouts can all register external CSS/JS URLs while
+the page is rendering. The layout then decides where to emit the final tags by
+calling `Assets::renderCss()` and `Assets::renderJs()` explicitly.
+
+Use it from templates like this:
+
+```php
+<?php
+use Nullai\Vista\Assets;
+
+Assets::css('/css/faq-split.css');
+Assets::js('/js/faq-split.js');
+```
+
+### Render-order contract
+
+`Assets` works because Vista renders in two phases:
+
+1. The page view and its partials execute first.
+2. If the page selected a layout, Vista captures that page output, then renders the layout.
+
+That means any `Assets::css()` / `Assets::js()` calls made during the page view,
+partials, or even nested `View::content()` calls have already populated the
+registry by the time the layout runs.
+
+Vista resets the registry automatically at the start of the **outermost**
+`ViewRenderEngine::render()` call. In normal application code, each top-level
+`View::content()` starts clean, while nested renders inside that page still
+contribute to the same final registry.
+
+### Public API
+
+#### `Assets::css(string $path): void`
+
+Register a stylesheet URL for the current render tree.
+
+- Deduplicated by the exact path string.
+- First registration wins for ordering.
+- Accepts root-relative paths (`/css/app.css`) and fully-qualified URLs (`https://cdn.example.com/app.css`).
+
+#### `Assets::js(string $path): void`
+
+Register a script URL for the current render tree.
+
+- Same deduplication and ordering rules as `css()`.
+
+#### `Assets::renderCss(): string`
+
+Return one `<link rel="stylesheet" ...>` tag per registered CSS path.
+
+- Tags are newline-separated.
+- Returns an empty string when nothing was registered.
+- Layouts should usually echo this inside `<head>`.
+
+#### `Assets::renderJs(): string`
+
+Return one `<script src="..."></script>` tag per registered JS path.
+
+- Tags are newline-separated.
+- Returns an empty string when nothing was registered.
+- Layouts usually echo this near the end of `<body>`.
+
+#### `Assets::setVersionResolver(?callable $resolver): void`
+
+Override Vista's cache-busting strategy.
+
+- The callable receives the **original registered path**, including any query string or fragment.
+- It must return the version string to append as `v=...`.
+- Pass `null` to restore Vista's built-in default resolver.
+
+#### `Assets::reset(): void`
+
+Clear the current asset registry.
+
+- Mostly for tests or unusual long-running scripts.
+- Normal page renders should not need to call it manually.
+
+### Cache-busting behavior
+
+Every emitted asset URL gets a `v` query parameter appended:
+
+```php
+Assets::css('/css/app.css');
+echo Assets::renderCss();
+// <link rel="stylesheet" href="/css/app.css?v=1700000000">
+```
+
+Vista's default resolver works like this:
+
+1. Take the registered path.
+2. Strip any query string / fragment for filesystem lookup.
+3. Resolve the remaining path against `$_SERVER['DOCUMENT_ROOT']`.
+4. If the file exists, use `filemtime()`.
+5. Otherwise fall back to `'1'`.
+
+URL assembly rules:
+
+- Existing query string: append with `&v=...`
+- No query string: append with `?v=...`
+- Fragment present: keep it **after** the versioned URL
+
+Examples:
+
+```php
+Assets::css('/css/app.css');
+// => /css/app.css?v=...
+
+Assets::css('/css/app.css?theme=dark');
+// => /css/app.css?theme=dark&v=...
+
+Assets::css('/css/app.css?theme=dark#hero');
+// => /css/app.css?theme=dark&v=...#hero
+```
+
+If your application serves assets from a build manifest, CDN, release hash, or
+some other non-`DOCUMENT_ROOT` source, provide a custom resolver:
+
+```php
+<?php
+use Nullai\Vista\Assets;
+
+Assets::setVersionResolver(static function(string $webPath): string {
+    return hash('xxh3', $webPath);
+});
+```
+
+Important nuance:
+
+- Fully-qualified URLs still pass through the default resolver.
+- The default resolver only uses the URL's **path component** for filesystem lookup.
+- If that path does not map to a real file under `DOCUMENT_ROOT`, Vista falls back to `v=1`.
+- CDN / manifest-driven setups should usually install a custom resolver.
+
+### Minimal page example
+
+Root view:
+
+```php
+<?php
+use Nullai\Vista\Assets;
+
+$this->layout('layouts.main');
+$this->include('partials.faq-split');
+?>
+<main>FAQ page</main>
+```
+
+Partial:
+
+```php
+<?php
+use Nullai\Vista\Assets;
+
+Assets::css('/css/faq-split.css');
+Assets::js('/js/faq-split.js');
+?>
+<section class="faq-split">...</section>
+```
+
+Layout:
+
+```php
+<?php use Nullai\Vista\Assets; ?>
+<html lang="en">
+<head>
+    <?= Assets::renderCss() ?>
+</head>
+<body>
+    <?php $this->yield('main'); ?>
+    <?= Assets::renderJs() ?>
+</body>
+</html>
+```
+
+Render:
+
+```php
+echo new View('pages.faq')->content();
+```
+
+### Asset gotchas
+
+- **Layouts must emit the tags.** `Assets::css()` / `js()` only register paths; Vista never auto-injects markup.
+- **Deduplication is exact-string based.** `/css/app.css` and `/css/app.css?theme=dark` are treated as different assets.
+- **Ordering is first-registration order.** Later duplicate registrations are ignored.
+- **The resolver is global for the current PHP process.** Tests should restore it after overriding it.
+
 ## Data flow summary
 
 ```
@@ -319,3 +515,4 @@ The engine constructor receives the `View` instance. `render()` must echo — th
 - **No auto-escaping.** Use `htmlspecialchars()` / `json_encode(..., JSON_HEX_*)` in your templates.
 - **Don't close Vista's buffers externally.** If `ob_end_clean()` is called from unrelated code while Vista is mid-render, Vista throws `\RuntimeException` on the next `ob_get_clean()`.
 - **Prefer `View::content()` over reusing an engine.** Each `content()` call builds a fresh engine; you never need to think about `reset()` if you follow this pattern.
+- **Assets only handle external files.** `Assets` is for `<link>` / `<script src="...">` URLs, not inline `<style>` or inline `<script>` blocks.
