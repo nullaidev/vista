@@ -2,6 +2,7 @@
 
 namespace Nullai\Vista\Engines;
 
+use Nullai\Vista\Assets;
 use Nullai\Vista\View;
 
 class ViewRenderEngine implements \Stringable, RenderEngineInterface
@@ -126,36 +127,46 @@ class ViewRenderEngine implements \Stringable, RenderEngineInterface
         // (see the include below) — those mutations are what the layout branch
         // at the bottom of this method reads.
         $this->reset();
+        static $renderDepth = 0;
+        $outermostRender = $renderDepth++ === 0;
 
-        $_data = $this->view->data;
-
-        if(!file_exists($this->view->fullPath)) {
-            throw new \Exception("ViewRenderEngine {$this->view->fullPath} not found");
+        if($outermostRender) {
+            Assets::reset();
         }
 
-        extract($_data, EXTR_SKIP);
+        try {
+            $_data = $this->view->data;
 
-        // The included view file runs with $this bound to this engine, so calls
-        // like $this->layout(...), $this->section(...)/$this->end(), and
-        // $this->include(...) inside the template mutate engine state mid-render.
-        // Anything checked after this line reflects what the template did.
-        include ( $this->view->fullPath );
-
-        // $this->layout is non-empty only if the view file called $this->layout(...).
-        if($this->layout) {
-            $captured = ob_get_clean();
-            if($captured === false) {
-                throw new \RuntimeException('Expected an active output buffer while applying layout.');
-            }
-            $html = trim($captured);
-
-            if(empty($this->sections['main'])) {
-                $this->sections['main'] = $html;
-            } elseif($html) {
-                $this->sections['__main'] = $html;
+            if(!file_exists($this->view->fullPath)) {
+                throw new \Exception("ViewRenderEngine {$this->view->fullPath} not found");
             }
 
-            $this->include($this->layout);
+            extract($_data, EXTR_SKIP);
+
+            // The included view file runs with $this bound to this engine, so calls
+            // like $this->layout(...), $this->section(...)/$this->end(), and
+            // $this->include(...) inside the template mutate engine state mid-render.
+            // Anything checked after this line reflects what the template did.
+            include ( $this->view->fullPath );
+
+            // $this->layout is non-empty only if the view file called $this->layout(...).
+            if($this->layout) {
+                $captured = ob_get_clean();
+                if($captured === false) {
+                    throw new \RuntimeException('Expected an active output buffer while applying layout.');
+                }
+                $html = trim($captured);
+
+                if(empty($this->sections['main'])) {
+                    $this->sections['main'] = $html;
+                } elseif($html) {
+                    $this->sections['__main'] = $html;
+                }
+
+                $this->include($this->layout);
+            }
+        } finally {
+            $renderDepth--;
         }
     }
 

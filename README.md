@@ -57,6 +57,134 @@ $this->include(), and templates under the views/ folder).
 
 In **Claude Code** you can also just type `/vista` to invoke it directly.
 
+## Engine API
+
+Vista's default engine is `Nullai\Vista\Engines\ViewRenderEngine`. Inside a
+template, `$this` is the engine instance, which gives views access to layouts,
+sections, and includes:
+
+```php
+<?php
+/** @var \Nullai\Vista\Engines\ViewRenderEngine $this */
+
+$this->layout('layouts.main');
+
+$this->section('scripts');
+?>
+<script>console.log('page');</script>
+<?php
+$this->end();
+
+$this->include('partials.card', ['title' => 'Hello']);
+```
+
+The corresponding layout decides where those captured sections appear:
+
+```php
+<html lang="en">
+<head>
+    <?php $this->yield('scripts'); ?>
+</head>
+<body>
+    <?php $this->yield('main'); ?>
+</body>
+</html>
+```
+
+## Assets
+
+Vista includes a tiny per-render asset registry for external CSS and JavaScript
+files:
+
+```php
+use Nullai\Vista\Assets;
+
+Assets::css('/css/app.css');
+Assets::js('/js/app.js');
+```
+
+Registration happens while the page view and its partials execute. Rendering
+happens later, when the layout explicitly calls `Assets::renderCss()` and
+`Assets::renderJs()`. Vista does not auto-inject tags, so the layout must
+decide where they belong:
+
+```php
+<head>
+    <?= \Nullai\Vista\Assets::renderCss() ?>
+</head>
+<body>
+    <?php $this->yield('main'); ?>
+    <?= \Nullai\Vista\Assets::renderJs() ?>
+</body>
+```
+
+This works because Vista captures the page view before it renders the layout.
+By the time the layout runs, any `Assets::css()` / `Assets::js()` calls made by
+the page view or nested partials have already been registered. Duplicate paths
+are ignored, and registration order is preserved. Nested `View::content()`
+calls inside the same render also contribute to that page's registry instead of
+clearing it.
+
+Each emitted URL gets a `v` query parameter for cache busting. By default,
+Vista resolves a version from `$_SERVER['DOCUMENT_ROOT'] . $webPath` and uses
+`filemtime()` when the file exists. Missing files fall back to `v=1`.
+
+If your app needs a different strategy, override it with a single resolver:
+
+```php
+use Nullai\Vista\Assets;
+
+Assets::setVersionResolver(static function (string $webPath): string {
+    return hash('xxh3', $webPath);
+});
+```
+
+### Minimal example
+
+Page view:
+
+```php
+<?php
+use Nullai\Vista\Assets;
+
+$this->layout('layouts.main');
+$this->include('partials.faq-split');
+?>
+<main>FAQ page</main>
+```
+
+Partial:
+
+```php
+<?php
+use Nullai\Vista\Assets;
+
+Assets::css('/css/faq-split.css');
+Assets::js('/js/faq-split.js');
+?>
+<section class="faq-split">...</section>
+```
+
+Layout:
+
+```php
+<html lang="en">
+<head>
+    <?= \Nullai\Vista\Assets::renderCss() ?>
+</head>
+<body>
+    <?php $this->yield('main'); ?>
+    <?= \Nullai\Vista\Assets::renderJs() ?>
+</body>
+</html>
+```
+
+Render:
+
+```php
+echo new \Nullai\Vista\View('pages.faq')->content();
+```
+
 ## Security Vulnerabilities
 
 If you discover a security vulnerability within Vista, please submit an issue on GitHub. All security vulnerabilities will be promptly addressed.
