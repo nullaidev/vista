@@ -1,0 +1,41 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+$useColor = function_exists('stream_isatty') && @stream_isatty(STDOUT);
+$width    = 62;
+
+$c = static function (string $code, string $text) use ($useColor): string {
+    return $useColor ? "\033[{$code}m{$text}\033[0m" : $text;
+};
+
+$cyan  = static fn (string $t) => $c('36', $t);
+$bold  = static fn (string $t) => $c('1', $t);
+$dim   = static fn (string $t) => $c('2', $t);
+$green = static fn (string $t) => $c('32', $t);
+
+$line = static function (string $inner, int $visible) use ($width, $cyan): string {
+    $pad = max(0, $width - 2 - $visible);
+    return $cyan('│') . ' ' . $inner . str_repeat(' ', $pad) . ' ' . $cyan('│');
+};
+
+$top = $cyan('╭' . str_repeat('─', $width) . '╮');
+$mid = $cyan('├' . str_repeat('─', $width) . '┤');
+$bot = $cyan('╰' . str_repeat('─', $width) . '╯');
+$blank = $cyan('│') . str_repeat(' ', $width) . $cyan('│');
+
+echo PHP_EOL;
+echo $top . PHP_EOL;
+echo $line($bold('Vista') . $dim(' — AI Skill'), mb_strlen('Vista — AI Skill')) . PHP_EOL;
+echo $mid . PHP_EOL;
+echo $blank . PHP_EOL;
+echo $line('Keep your AI assistant in sync with this Vista version:', 55) . PHP_EOL;
+echo $blank . PHP_EOL;
+echo $line('  ' . $green('$') . ' ' . $bold('vendor/bin/vista install-skill'), 34) . PHP_EOL;
+echo $blank . PHP_EOL;
+echo $line($dim('Installs the Vista skill for Claude Code, Codex, Cursor,'), 56) . PHP_EOL;
+echo $line($dim('Gemini CLI, and other agentskills.io-compliant tools.'), 53) . PHP_EOL;
+echo $blank . PHP_EOL;
+echo $bot . PHP_EOL;
+echo PHP_EOL;

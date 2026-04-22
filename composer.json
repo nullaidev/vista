@@ -16,6 +16,10 @@
     "autoload-dev": {
         "psr-4": {"Tests\\": "tests/"}
     },
-    "bin": ["bin/vista"],
-    "minimum-stability": "stable"
+    "bin": ["bin/vista", "bin/vista-notice"],
+    "minimum-stability": "stable",
+    "scripts": {
+        "post-install-cmd": "@php bin/vista-notice",
+        "post-update-cmd": "@php bin/vista-notice"
+    }
 }
